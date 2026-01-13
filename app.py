@@ -116,6 +116,37 @@ def badge(estatus: str):
         return "🔴 " + estatus
     return "🔵 " + estatus
 
+
+
+
+# =========================
+# HELPERS PARA RESUMEN / TABLERO
+# =========================
+HOY = date.today()
+
+def dias_a(fecha):
+    if fecha is None or str(fecha).strip() == "":
+        return None
+    try:
+        return (datetime.fromisoformat(str(fecha)).date() - HOY).days
+    except:
+        try:
+            return (pd.to_datetime(fecha).date() - HOY).days
+        except:
+            return None
+
+def semaforo(d):
+    if d is None:
+        return "—"
+    if d < 0:
+        return f"🔴 Vencido ({abs(d)} días)"
+    if d == 0:
+        return "🟠 Hoy"
+    if d <= 7:
+        return f"🟡 En {d} días"
+    return f"🟢 En {d} días"
+
+
 # =========================
 # DB INIT
 # =========================
@@ -127,7 +158,15 @@ init_db()
 st.sidebar.title("📌 Menú")
 page = st.sidebar.radio(
     "Ir a:",
-    ["Seguimiento de Apoyos", "Licitaciones", "Power BI", "Calendario"],
+    [
+ "Seguimiento de Apoyos",
+ "Licitaciones",
+ "Resumen",
+ "Tablero",
+ "Power BI",
+ "Calendario"
+]
+,
     index=0
 )
 
