@@ -146,6 +146,52 @@ def semaforo(d):
         return f"🟡 En {d} días"
     return f"🟢 En {d} días"
 
+# =========================
+# HELPERS PARA TIMELINE (MINI-GANTT)
+# =========================
+def clamp(x, a, b):
+    return max(a, min(b, x))
+
+def pos_pct(dias, ventana):
+    """Convierte días (0..ventana) a porcentaje (0..100)."""
+    if dias is None:
+        return None
+    return 100 * (clamp(dias, 0, ventana) / ventana)
+
+def timeline_html(dias_ja, dias_ap, dias_fa, ventana=60):
+    """Barra horizontal con marcadores JA/AP/FA."""
+    marks = [
+        ("JA", dias_ja, "#2E86DE"),
+        ("AP", dias_ap, "#F39C12"),
+        ("FA", dias_fa, "#27AE60"),
+    ]
+
+    dots = []
+    for label, d, color in marks:
+        if d is None:
+            continue
+        p = pos_pct(d, ventana)
+        dots.append(f"""
+        <div style="position:absolute; left:calc({p}% - 7px); top:-6px;
+            width:14px; height:14px; border-radius:50%;
+            background:{color}; border:2px solid white;
+            box-shadow:0 1px 3px rgba(0,0,0,.25);" title="{label}: {d} días"></div>
+        <div style="position:absolute; left:calc({p}% - 12px); top:14px;
+            font-size:11px; color:#111; font-weight:600;">{label}</div>
+        """)
+
+    base = f"""
+    <div style="position:relative; width:100%; height:34px; margin-top:6px;">
+      <div style="position:absolute; left:0; top:6px; right:0; height:8px;
+        background:#E9EEF5; border-radius:999px;"></div>
+      <div style="position:absolute; left:0; top:3px; width:2px; height:14px;
+        background:#111; opacity:.55;"></div>
+      <div style="position:absolute; left:0; top:-14px; font-size:11px; color:#111; opacity:.7;">Hoy</div>
+      {''.join(dots)}
+    </div>
+    """
+    return base
+
 
 # =========================
 # DB INIT
@@ -584,6 +630,222 @@ elif page == "Licitaciones":
                 )
         else:
             st.info("Aún no hay licitaciones registradas.")
+
+# =========================
+# PAGE 3: RESUMEN (CONTROL OPERATIVO)
+# =========================
+elif page == "Resumen":
+    st.title("🚦 Resumen (control operativo)")
+    st.caption("Semáforo + ranking de urgencia y timeline (mini-Gantt) por licitación. Power BI se mantiene como dashboard exclusivo.")
+
+    df = sql_df("""
+        SELECT id, clave, titulo, institucion, unidad, responsable, estatus,
+               junta_aclaraciones, apertura, fallo, link
+        FROM licitaciones
+        ORDER BY id DESC;
+    """)
+
+    if df.empty:
+        st.info("Aún no hay licitaciones registradas.")
+    else:
+        # Parse fechas
+        for c in ["junta_aclaraciones", "apertura", "fallo"]:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
+
+        # Controles
+        c1, c2, c3, c4 = st.columns([1.1, 1.1, 1.2, 1.6])
+        with c1:
+            modo = st.selectbox("Mostrar", ["Más urgentes primero", "Todo"], index=0)
+        with c2:
+            ventana = st.slider("Ventana timeline (días)", 14, 180, 60)
+        with c3:
+            filtro_estatus = st.selectbox("Estatus", ["(Todos)", "Abierta", "En análisis", "En gestión", "Cerrada", "Cancelada"], index=0)
+        with c4:
+            filtro_resp = st.text_input("Responsable (contiene)", "")
+
+        # Días a eventos
+        df["dias_JA"] = df["junta_aclaraciones"].dt.date.apply(dias_a)
+        df["dias_AP"] = df["apertura"].dt.date.apply(dias_a)
+        df["dias_FA"] = df["fallo"].dt.date.apply(dias_a)
+
+        def min_no_null(row):
+            vals = [row["dias_JA"], row["dias_AP"], row["dias_FA"]]
+            vals = [v for v in vals if v is not None]
+            return min(vals) if vals else None
+
+        df["dias_min"] = df.apply(min_no_null, axis=1)
+
+        # Filtros
+        if filtro_estatus != "(Todos)":
+            df = df[df["estatus"] == filtro_estatus]
+        if filtro_resp.strip():
+            s = filtro_resp.strip().lower()
+            df = df[df["responsable"].fillna("").str.lower().str.contains(s)]
+
+        if modo == "Más urgentes primero":
+            df = df.sort_values("dias_min", ascending=True, na_position="last")
+
+        # KPIs rápidos
+        total = len(df)
+        vencidas = int(((df["dias_min"].notna()) & (df["dias_min"] < 0)).sum())
+        hoy = int(((df["dias_min"].notna()) & (df["dias_min"] == 0)).sum())
+        en7 = int(((df["dias_min"].notna()) & (df["dias_min"] >= 1) & (df["dias_min"] <= 7)).sum())
+
+        k1, k2, k3, k4 = st.columns(4)
+        k1.metric("Total", total)
+        k2.metric("🔴 Vencidas", vencidas)
+        k3.metric("🟠 Hoy", hoy)
+        k4.metric("🟡 En 7 días", en7)
+
+        st.markdown("---")
+        st.subheader("🚨 Semáforo de urgencia")
+
+        venc_df = df[(df["dias_min"].notna()) & (df["dias_min"] < 0)].copy().sort_values("dias_min", ascending=True)
+        hoy_df  = df[(df["dias_min"].notna()) & (df["dias_min"] == 0)].copy()
+        en7_df  = df[(df["dias_min"].notna()) & (df["dias_min"] >= 1) & (df["dias_min"] <= 7)].copy().sort_values("dias_min", ascending=True)
+
+        a, b, c = st.columns(3, gap="large")
+        with a:
+            st.markdown("### 🔴 Vencido")
+            st.caption("Eventos que ya pasaron.")
+            st.dataframe(venc_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
+                         use_container_width=True, height=260)
+        with b:
+            st.markdown("### 🟠 Hoy")
+            st.caption("Eventos que caen hoy.")
+            st.dataframe(hoy_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
+                         use_container_width=True, height=260)
+        with c:
+            st.markdown("### 🟡 En 7 días")
+            st.caption("Eventos próximos (1 a 7 días).")
+            st.dataframe(en7_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
+                         use_container_width=True, height=260)
+
+        st.markdown("---")
+        st.subheader("📍 Timeline (mini-Gantt) por licitación")
+
+        # Mostramos top (para no saturar)
+        top = df.head(30) if modo == "Más urgentes primero" else df.head(30)
+
+        for _, r in top.iterrows():
+            with st.container(border=True):
+                left, right = st.columns([1.15, 2.15], gap="large")
+
+                with left:
+                    st.write(f"**{r.get('clave','')}** — {badge(r.get('estatus',''))}")
+                    st.write(f"{r.get('institucion','')} | {r.get('unidad','')}")
+                    st.write(f"Resp: {r.get('responsable','') or '—'}")
+                    st.write(f"JA: {semaforo(r.get('dias_JA'))}")
+                    st.write(f"Apertura: {semaforo(r.get('dias_AP'))}")
+                    st.write(f"Fallo: {semaforo(r.get('dias_FA'))}")
+
+                with right:
+                    st.markdown(
+                        timeline_html(r.get("dias_JA"), r.get("dias_AP"), r.get("dias_FA"), ventana=ventana),
+                        unsafe_allow_html=True
+                    )
+                    if r.get("link"):
+                        st.link_button("Abrir link", r["link"])
+
+        st.markdown("---")
+        st.subheader("⬇️ Exportar (lo que estás viendo)")
+        export_cols = ["clave","titulo","institucion","unidad","responsable","estatus","dias_JA","dias_AP","dias_FA","dias_min","link"]
+        exp = df.copy()
+        exp["estatus"] = exp["estatus"].apply(lambda x: x or "")
+        st.download_button(
+            "Descargar Excel",
+            data=df_to_excel_bytes(exp[export_cols], "resumen"),
+            file_name="resumen_operativo.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
+
+# =========================
+# PAGE 4: TABLERO (KANBAN TIPO JIRA)
+# =========================
+elif page == "Tablero":
+    st.title("🧩 Tablero (tipo Jira)")
+    st.caption("Vista Kanban por estatus. Cambia el estatus desde cada tarjeta.")
+
+    df = sql_df("""
+        SELECT id, clave, titulo, institucion, unidad, responsable, estatus,
+               junta_aclaraciones, apertura, fallo, link
+        FROM licitaciones
+        ORDER BY id DESC;
+    """)
+
+    if df.empty:
+        st.info("Aún no hay licitaciones registradas.")
+    else:
+        for c in ["junta_aclaraciones", "apertura", "fallo"]:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
+
+        df["dias_JA"] = df["junta_aclaraciones"].dt.date.apply(dias_a)
+        df["dias_AP"] = df["apertura"].dt.date.apply(dias_a)
+        df["dias_FA"] = df["fallo"].dt.date.apply(dias_a)
+
+        estados = ["Abierta", "En análisis", "En gestión", "Cerrada", "Cancelada"]
+
+        # Filtros rápidos
+        f1, f2 = st.columns([1.2, 2.0])
+        with f1:
+            fil_est = st.selectbox("Filtrar estatus", ["(Todos)"] + estados, index=0)
+        with f2:
+            fil_txt = st.text_input("Buscar (clave / institución / unidad / responsable)", "")
+
+        dff = df.copy()
+        if fil_est != "(Todos)":
+            dff = dff[dff["estatus"] == fil_est]
+        if fil_txt.strip():
+            s = fil_txt.strip().lower()
+            mask = (
+                dff["clave"].fillna("").str.lower().str.contains(s) |
+                dff["institucion"].fillna("").str.lower().str.contains(s) |
+                dff["unidad"].fillna("").str.lower().str.contains(s) |
+                dff["responsable"].fillna("").str.lower().str.contains(s)
+            )
+            dff = dff[mask]
+
+        cols = st.columns(len(estados), gap="large")
+
+        for col, est in zip(cols, estados):
+            subset = dff[dff["estatus"] == est].copy()
+
+            # Orden interno: más urgente primero
+            def min_no_null(row):
+                vals = [row["dias_JA"], row["dias_AP"], row["dias_FA"]]
+                vals = [v for v in vals if v is not None]
+                return min(vals) if vals else 999999
+
+            subset["dias_min"] = subset.apply(min_no_null, axis=1)
+            subset = subset.sort_values("dias_min", ascending=True)
+
+            with col:
+                st.markdown(f"### {badge(est)}")
+                st.caption(f"{len(subset)} items")
+
+                if subset.empty:
+                    st.write("—")
+                else:
+                    for _, r in subset.iterrows():
+                        with st.container(border=True):
+                            st.write(f"**{r.get('clave','')}**")
+                            st.write(f"{r.get('institucion','')} | {r.get('unidad','')}")
+                            st.write(f"Resp: {r.get('responsable','') or '—'}")
+                            st.write(f"JA: {semaforo(r.get('dias_JA'))}")
+                            st.write(f"Fallo: {semaforo(r.get('dias_FA'))}")
+
+                            nuevo = st.selectbox("Mover a:", estados, index=estados.index(est), key=f"move_{r['id']}")
+                            if nuevo != est:
+                                if st.button("Actualizar", key=f"btn_{r['id']}", use_container_width=True):
+                                    with engine.begin() as conn:
+                                        conn.execute(text("UPDATE licitaciones SET estatus=:e WHERE id=:id;"), {"e": nuevo, "id": int(r["id"])})
+                                    st.success("Actualizado.")
+                                    st.rerun()
+
+                            if r.get("link"):
+                                st.link_button("Abrir", r["link"])
+
 
 # =========================
 # PAGE 3: POWER BI
