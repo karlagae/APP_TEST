@@ -212,6 +212,48 @@ page = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.caption("Base local: SQLite (seguimiento.db)")
 
+# =========================
+# ESTILO (Dashboard look)
+# =========================
+st.markdown("""
+<style>
+/* ancho y aire */
+.block-container { padding-top: 1.3rem; padding-bottom: 2rem; max-width: 1400px; }
+
+/* barra de filtros */
+.filters-row [data-testid="stTextInput"], 
+.filters-row [data-testid="stSelectbox"] { margin-bottom: 0px; }
+
+/* tarjetas KPI */
+.kpi-wrap{
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: white;
+  border: 1px solid #e9edf5;
+  box-shadow: 0 6px 18px rgba(15,23,42,.06);
+}
+.kpi-num{
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.0;
+  margin: 0;
+}
+.kpi-lbl{
+  font-size: 14px;
+  opacity: .75;
+  margin-top: 6px;
+}
+
+/* tabs más limpios */
+button[data-baseweb="tab"]{
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+/* tabla */
+[data-testid="stDataFrame"] { border: 1px solid #eef2f7; border-radius: 12px; overflow: hidden; }
+</style>
+""", unsafe_allow_html=True)
 
 # =========================
 # PAGE 0: EXCEL (BASE OFICIAL)
