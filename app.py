@@ -225,25 +225,25 @@ if page == "Excel (Base oficial)":
     c1, c2, c3 = st.columns(3)
 
     with c1:
-    if excel_file and st.button("✅ Importar / Actualizar en la base", use_container_width=True):
-        df_excel = pd.read_excel(excel_file)
-        ins, upd = upsert_licitaciones_from_excel(df_excel)
-        st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
-        st.rerun()
+        if excel_file and st.button("✅ Importar / Actualizar en la base", use_container_width=True):
+           df_excel = pd.read_excel(excel_file)
+           ins, upd = upsert_licitaciones_from_excel(df_excel)
+           st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
+           st.rerun()
 
     with c2:
-    if excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True):
-        df_excel = pd.read_excel(excel_file)
+       if excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True):
+         df_excel = pd.read_excel(excel_file)
 
-        st.markdown("---")
-        st.subheader("📊 Visor del Excel maestro")
+         st.markdown("---")
+         st.subheader("📊 Visor del Excel maestro")
 
-        visor = st.container(border=True)
-        visor.dataframe(
-            df_excel,
-            use_container_width=True,
-            height=780  # 👈 visor grande
-        )
+         visor = st.container(border=True)
+         visor.dataframe(
+              df_excel,
+              use_container_width=True,
+              height=780  # 👈 visor grande
+         )
 
 
 
