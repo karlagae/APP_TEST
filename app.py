@@ -233,8 +233,18 @@ if page == "Excel (Base oficial)":
 
     with c2:
         if excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True):
-            df_excel = pd.read_excel(excel_file)
-            st.dataframe(df_excel, use_container_width=True, height=600)
+    df_excel = pd.read_excel(excel_file)
+
+    st.markdown("---")
+    st.subheader("📊 Visor del Excel maestro")
+
+    visor = st.container(border=True)
+    visor.dataframe(
+        df_excel,
+        use_container_width=True,
+        height=780  # 👈 visor grande
+    )
+
 
     with c3:
         df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
