@@ -232,18 +232,7 @@ if page == "Excel (Base oficial)":
            st.rerun()
 
     with c2:
-       if excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True):
-         df_excel = pd.read_excel(excel_file)
-
-         st.markdown("---")
-         st.subheader("📊 Visor del Excel maestro")
-
-         visor = st.container(border=True)
-         visor.dataframe(
-              df_excel,
-              use_container_width=True,
-              height=780  # 👈 visor grande
-         )
+       ver_excel = excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True)
 
 
 
@@ -257,6 +246,18 @@ if page == "Excel (Base oficial)":
             use_container_width=True
         )
 
+if ver_excel:
+    df_excel = pd.read_excel(excel_file)
+
+    st.markdown("---")
+    st.subheader("📊 Visor del Excel maestro")
+
+    visor = st.container(border=True)
+    visor.dataframe(
+        df_excel,
+        use_container_width=True,
+        height=780
+    )
 
 
 
