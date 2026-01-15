@@ -419,6 +419,38 @@ elif page == "Licitaciones":
     st.title("📄 Licitaciones")
     st.caption("Registro completo de licitaciones + checks de apoyo, carta enviada, razón social y fechas.")
 
+    # ⬇️ AQUÍ PEGAS EL BLOQUE DEL EXCEL ⬇️
+    st.subheader("📥 Excel oficial (subir / consultar / descargar)")
+
+    excel_file = st.file_uploader("Sube tu Excel de seguimiento", type=["xlsx"], key="excel_licit")
+
+    colx1, colx2, colx3 = st.columns(3)
+
+    with colx1:
+        if excel_file and st.button("✅ Importar / Actualizar desde Excel", use_container_width=True):
+            df_excel = pd.read_excel(excel_file)
+            ins, upd = upsert_licitaciones_from_excel(df_excel)
+            st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
+            st.rerun()
+
+    with colx2:
+        if excel_file and st.button("👁️ Ver Excel aquí (vista previa)", use_container_width=True):
+            df_excel = pd.read_excel(excel_file)
+            st.dataframe(df_excel, use_container_width=True, height=420)
+
+    with colx3:
+        if st.button("⬇️ Descargar Excel actualizado (desde la base)", use_container_width=True):
+            df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
+            st.download_button(
+                "Descargar ahora",
+                data=df_to_excel_bytes(df_db, "licitaciones"),
+                file_name="SEGUIMIENTO_LIC_actualizado.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+
+    # ⬆️ AQUÍ TERMINA EL BLOQUE DEL EXCEL ⬆️
+
     colA, colB = st.columns([1.05, 1.6], gap="large")
 
     with colA:
