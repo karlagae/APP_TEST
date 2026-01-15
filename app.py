@@ -245,6 +245,9 @@ if page == "Excel (Base oficial)":
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
+ver_excel = False
+if excel_file:
+    ver_excel = st.button("👁️ Ver Excel aquí", use_container_width=True)
 
 if ver_excel:
     df_excel = pd.read_excel(excel_file)
