@@ -585,27 +585,98 @@ elif page == "Seguimiento de Apoyos":
 # =========================
 elif page == "Licitaciones en curso":
     st.title("📄 Licitaciones en curso")
-    st.caption("Registro completo de licitaciones + checks de apoyo, carta enviada, razón social y fechas.")
+    st.caption("Aquí solo se muestra lo que está guardado en la base (SQLite). Para cargar masivo usa: Excel (Base oficial) → Importar.")
 
-    colA, colB = st.columns([1.05, 1.6], gap="large")
+    # =========================
+    # CARGA DESDE DB
+    # =========================
+    df = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
 
-    with colA:
-        st.subheader("➕ Nueva / Editar licitación")
+    if df.empty:
+        st.warning("Aún no hay licitaciones en la base. Ve a: Excel (Base oficial) → sube tu Excel → ✅ Importar / Actualizar en la base.")
+        st.stop()
 
-        lic_df = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
+    # =========================
+    # FILTROS + RESUMEN (ARRIBA)
+    # =========================
+    f1, f2, f3, f4 = st.columns([1.4, 1, 1, 1])
+    with f1:
+        q = st.text_input("Buscar (clave/título/institución/unidad/responsable)", "")
+    with f2:
+        est = st.selectbox("Estatus", ["(Todos)", "Abierta", "En análisis", "En gestión", "Cerrada", "Cancelada"], index=0)
+    with f3:
+        ap = st.selectbox("Apoyo", ["(Todos)", "Pidió apoyo", "No pidió apoyo"], index=0)
+    with f4:
+        carta = st.selectbox("Carta", ["(Todas)", "Enviada", "No enviada"], index=0)
+
+    dff = df.copy()
+
+    if q.strip():
+        s = q.lower().strip()
+        mask = (
+            dff["clave"].fillna("").str.lower().str.contains(s) |
+            dff["titulo"].fillna("").str.lower().str.contains(s) |
+            dff["institucion"].fillna("").str.lower().str.contains(s) |
+            dff["unidad"].fillna("").str.lower().str.contains(s) |
+            dff["responsable"].fillna("").str.lower().str.contains(s)
+        )
+        dff = dff[mask]
+
+    if est != "(Todos)":
+        dff = dff[dff["estatus"] == est]
+
+    if ap == "Pidió apoyo":
+        dff = dff[dff["pidio_apoyo"] == 1]
+    elif ap == "No pidió apoyo":
+        dff = dff[dff["pidio_apoyo"] == 0]
+
+    if carta == "Enviada":
+        dff = dff[dff["carta_enviada"] == 1]
+    elif carta == "No enviada":
+        dff = dff[dff["carta_enviada"] == 0]
+
+    # métricas
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Total", len(dff))
+    m2.metric("Con apoyo", int((dff["pidio_apoyo"] == 1).sum()))
+    m3.metric("Carta enviada", int((dff["carta_enviada"] == 1).sum()))
+    m4.metric("Abiertas", int((dff["estatus"] == "Abierta").sum()))
+
+    st.markdown("---")
+
+    # =========================
+    # LISTA GRANDE (PRIMERO)
+    # =========================
+    st.subheader("📋 Lista de licitaciones (vista grande)")
+
+    show = dff.copy()
+    show["pidio_apoyo"] = show["pidio_apoyo"].apply(lambda x: "✅" if x == 1 else "—")
+    show["carta_enviada"] = show["carta_enviada"].apply(lambda x: "📨" if x == 1 else "—")
+    show["estatus"] = show["estatus"].apply(badge)
+
+    st.dataframe(show, use_container_width=True, height=650)
+
+    # =========================
+    # FORMULARIO PLEGABLE (NUEVO/EDITAR)
+    # =========================
+    st.markdown("---")
+    with st.expander("➕ Nueva / Editar licitación (abrir formulario)", expanded=False):
+
+        lic_df = df  # ya lo traímos arriba
         edit_id = st.selectbox(
             "Editar licitación existente (opcional)",
-            options=[None] + (lic_df["id"].tolist() if not lic_df.empty else []),
+            options=[None] + lic_df["id"].tolist(),
             format_func=lambda x: "— Nueva —" if x is None else f"ID {x}"
         )
 
         current = {}
-        if edit_id is not None and not lic_df.empty:
+        if edit_id is not None:
             current = lic_df[lic_df["id"] == edit_id].iloc[0].to_dict()
 
         def g(key, default=""):
             return current.get(key, default) if current else default
 
+        st.subheader("🧾 Datos principales")
         clave = st.text_input("Clave / Expediente", value=g("clave"))
         titulo = st.text_input("Título", value=g("titulo"))
         institucion = st.text_input("Institución", value=g("institucion"))
@@ -614,16 +685,18 @@ elif page == "Licitaciones en curso":
         integrador = st.text_input("Integrador (si aplica)", value=g("integrador"))
         monto = st.number_input("Monto estimado (opcional)", min_value=0.0, value=float(g("monto_estimado", 0.0) or 0.0), step=1000.0)
 
+        st.subheader("📅 Fechas")
         f_pub = st.date_input("Fecha publicación (opcional)", value=(date.fromisoformat(g("fecha_publicacion")) if g("fecha_publicacion") else date.today()))
         ja = st.date_input("Junta de aclaraciones (opcional)", value=(date.fromisoformat(g("junta_aclaraciones")) if g("junta_aclaraciones") else date.today()))
         apertura = st.date_input("Apertura (opcional)", value=(date.fromisoformat(g("apertura")) if g("apertura") else date.today()))
         fallo = st.date_input("Fallo (opcional)", value=(date.fromisoformat(g("fallo")) if g("fallo") else date.today()))
         firma = st.date_input("Firma contrato (opcional)", value=(date.fromisoformat(g("firma_contrato")) if g("firma_contrato") else date.today()))
 
-        st.markdown("### ✅ Checks y control")
+        st.subheader("✅ Seguimiento")
         pidio_apoyo = st.checkbox("Pidió apoyo", value=bool(g("pidio_apoyo", 0)))
         carta_enviada = st.checkbox("Carta enviada", value=bool(g("carta_enviada", 0)))
         razon_social = st.text_input("Razón social (si aplica)", value=g("razon_social"))
+
         estatus = st.selectbox(
             "Estatus",
             ["Abierta", "En análisis", "En gestión", "Cerrada", "Cancelada"],
@@ -631,27 +704,11 @@ elif page == "Licitaciones en curso":
         )
         responsable = st.text_input("Responsable", value=g("responsable"))
         link = st.text_input("Link (ComprasMX/drive/etc.)", value=g("link"))
-        notas = st.text_area("Notas", value=g("notas"), height=110)
-
-        # Vincular apoyo (si pidio_apoyo)
-        apoyo_id = None
-        if pidio_apoyo:
-            apoyos_df = sql_df("SELECT id, institucion, unidad, contacto, estatus FROM apoyos ORDER BY id DESC;")
-            if not apoyos_df.empty:
-                apoyos_df["label"] = apoyos_df.apply(lambda r: f'ID {r["id"]} | {r["institucion"]} | {r["unidad"]} | {r["contacto"]} | {r["estatus"]}', axis=1)
-                options = [None] + apoyos_df["id"].tolist()
-                apoyo_id = st.selectbox(
-                    "Vincular a un apoyo existente (opcional)",
-                    options=options,
-                    index=0 if g("apoyo_id") in [None, "", 0] else (options.index(int(g("apoyo_id")) ) if int(g("apoyo_id")) in options else 0),
-                    format_func=lambda x: "— Sin vínculo —" if x is None else apoyos_df.loc[apoyos_df["id"]==x, "label"].values[0]
-                )
-            else:
-                st.info("No hay apoyos registrados aún (puedes crear uno en la pestaña de Apoyos).")
+        notas = st.text_area("Notas", value=g("notas"), height=120)
 
         c1, c2, c3 = st.columns(3)
         with c1:
-            if st.button("💾 Guardar", use_container_width=True):
+            if st.button("💾 Guardar cambios", use_container_width=True):
                 payload = {
                     "clave": clave.strip(),
                     "titulo": titulo.strip(),
@@ -666,7 +723,7 @@ elif page == "Licitaciones en curso":
                     "fallo": safe_date_str(fallo) if fallo else "",
                     "firma_contrato": safe_date_str(firma) if firma else "",
                     "pidio_apoyo": bool_to_int(pidio_apoyo),
-                    "apoyo_id": int(apoyo_id) if apoyo_id else None,
+                    "apoyo_id": None,
                     "carta_enviada": bool_to_int(carta_enviada),
                     "razon_social": razon_social.strip(),
                     "estatus": estatus,
@@ -674,6 +731,7 @@ elif page == "Licitaciones en curso":
                     "link": link.strip(),
                     "notas": notas.strip(),
                 }
+
                 with engine.begin() as conn:
                     if edit_id is None:
                         conn.execute(text("""
@@ -687,7 +745,6 @@ elif page == "Licitaciones en curso":
                                 :pidio_apoyo, :apoyo_id, :carta_enviada, :razon_social, :estatus, :responsable, :link, :notas
                             );
                         """), payload)
-                        st.success("Licitación guardada.")
                     else:
                         payload["id"] = int(edit_id)
                         conn.execute(text("""
@@ -714,90 +771,26 @@ elif page == "Licitaciones en curso":
                                 notas=:notas
                             WHERE id=:id;
                         """), payload)
-                        st.success("Licitación actualizada.")
+
+                st.success("✅ Guardado. Actualizando…")
                 st.rerun()
 
         with c2:
-            if st.button("🧹 Limpiar (nueva)", use_container_width=True):
-                st.rerun()
-
-        with c3:
             if edit_id is not None:
-                if st.button("🗑️ Eliminar", use_container_width=True):
+                if st.button("🗑️ Eliminar licitación", use_container_width=True):
                     with engine.begin() as conn:
                         conn.execute(text("DELETE FROM licitaciones WHERE id=:id;"), {"id": int(edit_id)})
                     st.warning("Licitación eliminada.")
                     st.rerun()
 
-    with colB:
-        st.subheader("📋 Lista de licitaciones")
-
-        f1, f2, f3, f4 = st.columns([1.2,1,1,1])
-        with f1:
-            q = st.text_input("Buscar (clave/título/institución/unidad/responsable)", "")
-        with f2:
-            est = st.selectbox("Estatus", ["(Todos)", "Abierta", "En análisis", "En gestión", "Cerrada", "Cancelada"], index=0)
-        with f3:
-            ap = st.selectbox("Apoyo", ["(Todos)", "Pidió apoyo", "No pidió apoyo"], index=0)
-        with f4:
-            carta = st.selectbox("Carta", ["(Todas)", "Enviada", "No enviada"], index=0)
-
-        df = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
-        if not df.empty:
-            if q.strip():
-                s = q.lower().strip()
-                mask = (
-                    df["clave"].fillna("").str.lower().str.contains(s) |
-                    df["titulo"].fillna("").str.lower().str.contains(s) |
-                    df["institucion"].fillna("").str.lower().str.contains(s) |
-                    df["unidad"].fillna("").str.lower().str.contains(s) |
-                    df["responsable"].fillna("").str.lower().str.contains(s)
-                )
-                df = df[mask]
-            if est != "(Todos)":
-                df = df[df["estatus"] == est]
-            if ap == "Pidió apoyo":
-                df = df[df["pidio_apoyo"] == 1]
-            elif ap == "No pidió apoyo":
-                df = df[df["pidio_apoyo"] == 0]
-            if carta == "Enviada":
-                df = df[df["carta_enviada"] == 1]
-            elif carta == "No enviada":
-                df = df[df["carta_enviada"] == 0]
-
-            # métricas
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Total", len(df))
-            c2.metric("Con apoyo", int((df["pidio_apoyo"] == 1).sum()))
-            c3.metric("Carta enviada", int((df["carta_enviada"] == 1).sum()))
-            c4.metric("Abiertas", int((df["estatus"] == "Abierta").sum()))
-
-            show = df.copy()
-            show["pidio_apoyo"] = show["pidio_apoyo"].apply(lambda x: "✅" if x == 1 else "—")
-            show["carta_enviada"] = show["carta_enviada"].apply(lambda x: "📨" if x == 1 else "—")
-            show["estatus"] = show["estatus"].apply(badge)
-
-            st.dataframe(show, use_container_width=True, height=520)
-
-            exp1, exp2 = st.columns(2)
-            with exp1:
-                st.download_button(
-                    "⬇️ Descargar Excel",
-                    data=df_to_excel_bytes(df, "licitaciones"),
-                    file_name="licitaciones.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-            with exp2:
-                st.download_button(
-                    "⬇️ Descargar CSV",
-                    data=df.to_csv(index=False).encode("utf-8"),
-                    file_name="licitaciones.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-        else:
-            st.info("Aún no hay licitaciones registradas.")
+        with c3:
+            st.download_button(
+                "⬇️ Descargar licitaciones (Excel)",
+                data=df_to_excel_bytes(dff, "licitaciones"),
+                file_name="licitaciones.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
 
 # =========================
 # PAGE 3: RESUMEN (CONTROL OPERATIVO)
