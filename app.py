@@ -204,17 +204,10 @@ init_db()
 st.sidebar.title("📌 Menú")
 page = st.sidebar.radio(
     "Ir a:",
-    [
- "Seguimiento de Apoyos",
- "Licitaciones",
- "Resumen",
- "Tablero",
- "Power BI",
- "Calendario"
-]
-,
+    ["Excel (Base oficial)", "Licitaciones en curso", "Seguimiento de Apoyos", "Power BI", "Calendario"],
     index=0
 )
+
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Base local: SQLite (seguimiento.db)")
