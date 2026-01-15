@@ -216,25 +216,154 @@ st.sidebar.caption("Base local: SQLite (seguimiento.db)")
 # =========================
 # PAGE 0: EXCEL (BASE OFICIAL)
 # =========================
+
+# ---- Excel -> DB (upsert) helpers ----
+
+def _norm_col(s: str) -> str:
+    return " ".join(str(s or "").strip().lower().split())
+
+
+def _pick_col(cols, *candidates):
+    """Return the real column name in cols matching any candidate (case/space-insensitive)."""
+    norm_map = {_norm_col(c): c for c in cols}
+    for cand in candidates:
+        key = _norm_col(cand)
+        if key in norm_map:
+            return norm_map[key]
+    return None
+
+
+def _to_date_str(x) -> str:
+    if x is None or (isinstance(x, float) and pd.isna(x)):
+        return ""
+    try:
+        dt = pd.to_datetime(x, errors="coerce")
+        if pd.isna(dt):
+            return ""
+        return dt.date().isoformat()
+    except Exception:
+        return ""
+
+
+def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
+    """Upsert rows from the Excel maestro into table 'licitaciones' using 'clave' as key."""
+    if df_excel is None or df_excel.empty:
+        return 0, 0
+
+    df = df_excel.copy()
+
+    # Try to map columns (update the candidates anytime your Excel changes)
+    col_clave = _pick_col(df.columns, "NUMERO DE LA LICITACIÓN", "NUMERO DE LA LICITACION", "CLAVE", "EXPEDIENTE")
+    col_titulo = _pick_col(df.columns, "TITULO", "DESCRIPCION", "ESPECIALIDAD SERV.INT (LAB)")
+    col_institucion = _pick_col(df.columns, "CONVOCANTE", "INSTITUCION")
+    col_unidad = _pick_col(df.columns, "UNIDAD", "HOSPITAL")
+    col_estado = _pick_col(df.columns, "ESTADO")
+    col_integrador = _pick_col(df.columns, "DISTRIBUIDOR ACTUAL", "INTEGRADOR", "LICITANTE GANADOR")
+    col_monto = _pick_col(df.columns, "MONTO", "MONTO ESTIMADO", "IMPORTE")
+
+    col_pub = _pick_col(df.columns, "FECHA DE PUBLICACIÓN", "FECHA DE PUBLICACION", "PUBLICACION")
+    col_ja = _pick_col(df.columns, "JUNTA DE ACLARACIONES", "JA", "JUNTA")
+    col_apertura = _pick_col(df.columns, "APERTURA", "PROPUESTA ECONOMICA")
+    col_fallo = _pick_col(df.columns, "FALLO")
+    col_firma = _pick_col(df.columns, "FIRMA", "FIRMA CONTRATO", "FIRMA DE CONTRATO")
+
+    col_razon = _pick_col(df.columns, "RAZON SOCIAL")
+    col_estatus = _pick_col(df.columns, "ESTATUS DE LA LICITACION", "ESTATUS")
+    col_responsable = _pick_col(df.columns, "ELABORO", "RESPONSABLE")
+
+    if not col_clave:
+        # Without clave we can't upsert safely
+        return 0, 0
+
+    inserted = 0
+    updated = 0
+
+    # Iterate rows
+    for _, r in df.iterrows():
+        clave = str(r.get(col_clave, "") or "").strip()
+        if not clave:
+            continue
+
+        payload = {
+            "clave": clave,
+            "titulo": str(r.get(col_titulo, "") or "").strip() if col_titulo else "",
+            "institucion": str(r.get(col_institucion, "") or "").strip() if col_institucion else "",
+            "unidad": str(r.get(col_unidad, "") or "").strip() if col_unidad else "",
+            "estado": str(r.get(col_estado, "") or "").strip() if col_estado else "",
+            "integrador": str(r.get(col_integrador, "") or "").strip() if col_integrador else "",
+            "monto_estimado": float(r.get(col_monto)) if (col_monto and pd.notna(r.get(col_monto))) else 0.0,
+            "fecha_publicacion": _to_date_str(r.get(col_pub)) if col_pub else "",
+            "junta_aclaraciones": _to_date_str(r.get(col_ja)) if col_ja else "",
+            "apertura": _to_date_str(r.get(col_apertura)) if col_apertura else "",
+            "fallo": _to_date_str(r.get(col_fallo)) if col_fallo else "",
+            "firma_contrato": _to_date_str(r.get(col_firma)) if col_firma else "",
+            "pidio_apoyo": 0,
+            "apoyo_id": None,
+            "carta_enviada": 0,
+            "razon_social": str(r.get(col_razon, "") or "").strip() if col_razon else "",
+            "estatus": str(r.get(col_estatus, "") or "").strip() if col_estatus else "",
+            "responsable": str(r.get(col_responsable, "") or "").strip() if col_responsable else "",
+            "link": "",
+            "notas": "",
+        }
+
+        with engine.begin() as conn:
+            exists = conn.execute(text("SELECT id FROM licitaciones WHERE clave=:c LIMIT 1"), {"c": clave}).fetchone()
+            if exists:
+                payload["id"] = int(exists[0])
+                conn.execute(text("""
+                    UPDATE licitaciones SET
+                        titulo=:titulo,
+                        institucion=:institucion,
+                        unidad=:unidad,
+                        estado=:estado,
+                        integrador=:integrador,
+                        monto_estimado=:monto_estimado,
+                        fecha_publicacion=:fecha_publicacion,
+                        junta_aclaraciones=:junta_aclaraciones,
+                        apertura=:apertura,
+                        fallo=:fallo,
+                        firma_contrato=:firma_contrato,
+                        razon_social=:razon_social,
+                        estatus=:estatus,
+                        responsable=:responsable
+                    WHERE id=:id;
+                """), payload)
+                updated += 1
+            else:
+                conn.execute(text("""
+                    INSERT INTO licitaciones (
+                        clave, titulo, institucion, unidad, estado, integrador, monto_estimado,
+                        fecha_publicacion, junta_aclaraciones, apertura, fallo, firma_contrato,
+                        pidio_apoyo, apoyo_id, carta_enviada, razon_social, estatus, responsable, link, notas
+                    ) VALUES (
+                        :clave, :titulo, :institucion, :unidad, :estado, :integrador, :monto_estimado,
+                        :fecha_publicacion, :junta_aclaraciones, :apertura, :fallo, :firma_contrato,
+                        :pidio_apoyo, :apoyo_id, :carta_enviada, :razon_social, :estatus, :responsable, :link, :notas
+                    );
+                """), payload)
+                inserted += 1
+
+    return inserted, updated
+
+
 if page == "Excel (Base oficial)":
     st.title("📘 Excel (Base oficial)")
     st.caption("Aquí cargas el Excel maestro. La app lo usa como base para licitaciones y seguimiento.")
 
-    excel_file = st.file_uploader("Sube tu Excel maestro", type=["xlsx"], key="excel_master")
+    excel_file = st.file_uploader("Sube tu Excel maestro", type=["xlsx"], key="excel_base")
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3 = st.columns([1, 1, 1])
 
     with c1:
         if excel_file and st.button("✅ Importar / Actualizar en la base", use_container_width=True):
-           df_excel = pd.read_excel(excel_file)
-           ins, upd = upsert_licitaciones_from_excel(df_excel)
-           st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
-           st.rerun()
+            df_excel = pd.read_excel(excel_file)
+            ins, upd = upsert_licitaciones_from_excel(df_excel)
+            st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
+            st.rerun()
 
     with c2:
-       ver_excel = excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True)
-
-
+        ver_excel = st.toggle("👁️ Ver Excel aquí", value=True, disabled=excel_file is None)
 
     with c3:
         df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
@@ -243,26 +372,18 @@ if page == "Excel (Base oficial)":
             data=df_to_excel_bytes(df_db, "licitaciones"),
             file_name="SEGUIMIENTO_LIC_actualizado.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
+            use_container_width=True,
         )
-ver_excel = False
-if excel_file:
-    ver_excel = st.button("👁️ Ver Excel aquí", use_container_width=True)
-
-if ver_excel:
-    df_excel = pd.read_excel(excel_file)
 
     st.markdown("---")
     st.subheader("📊 Visor del Excel maestro")
 
-    visor = st.container(border=True)
-    visor.dataframe(
-        df_excel,
-        use_container_width=True,
-        height=780
-    )
-
-
+    if excel_file and ver_excel:
+        df_excel = pd.read_excel(excel_file)
+        visor = st.container(border=True)
+        visor.dataframe(df_excel, use_container_width=True, height=720)
+    else:
+        st.info("Sube tu Excel para visualizarlo aquí. Si solo quieres ver licitaciones, ve a 'Licitaciones en curso'.")
 
 
 # =========================
@@ -462,41 +583,9 @@ elif page == "Seguimiento de Apoyos":
 # =========================
 # PAGE 2: LICITACIONES
 # =========================
-elif page == "Licitaciones":
-    st.title("📄 Licitaciones")
+elif page == "Licitaciones en curso":
+    st.title("📄 Licitaciones en curso")
     st.caption("Registro completo de licitaciones + checks de apoyo, carta enviada, razón social y fechas.")
-
-    # ⬇️ AQUÍ PEGAS EL BLOQUE DEL EXCEL ⬇️
-    st.subheader("📥 Excel oficial (subir / consultar / descargar)")
-
-    excel_file = st.file_uploader("Sube tu Excel de seguimiento", type=["xlsx"], key="excel_licit")
-
-    colx1, colx2, colx3 = st.columns(3)
-
-    with colx1:
-        if excel_file and st.button("✅ Importar / Actualizar desde Excel", use_container_width=True):
-            df_excel = pd.read_excel(excel_file)
-            ins, upd = upsert_licitaciones_from_excel(df_excel)
-            st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
-            st.rerun()
-
-    with colx2:
-        if excel_file and st.button("👁️ Ver Excel aquí (vista previa)", use_container_width=True):
-            df_excel = pd.read_excel(excel_file)
-            st.dataframe(df_excel, use_container_width=True, height=420)
-
-    with colx3:
-        if st.button("⬇️ Descargar Excel actualizado (desde la base)", use_container_width=True):
-            df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
-            st.download_button(
-                "Descargar ahora",
-                data=df_to_excel_bytes(df_db, "licitaciones"),
-                file_name="SEGUIMIENTO_LIC_actualizado.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-
-    # ⬆️ AQUÍ TERMINA EL BLOQUE DEL EXCEL ⬆️
 
     colA, colB = st.columns([1.05, 1.6], gap="large")
 
@@ -1040,4 +1129,5 @@ elif page == "Calendario":
         )
     else:
         st.info("No hay eventos para exportar.")
+
 
