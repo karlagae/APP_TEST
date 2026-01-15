@@ -212,10 +212,49 @@ page = st.sidebar.radio(
 st.sidebar.markdown("---")
 st.sidebar.caption("Base local: SQLite (seguimiento.db)")
 
+
+# =========================
+# PAGE 0: EXCEL (BASE OFICIAL)
+# =========================
+if page == "Excel (Base oficial)":
+    st.title("📘 Excel (Base oficial)")
+    st.caption("Aquí cargas el Excel maestro. La app lo usa como base para licitaciones y seguimiento.")
+
+    excel_file = st.file_uploader("Sube tu Excel maestro", type=["xlsx"], key="excel_master")
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        if excel_file and st.button("✅ Importar / Actualizar en la base", use_container_width=True):
+            df_excel = pd.read_excel(excel_file)
+            ins, upd = upsert_licitaciones_from_excel(df_excel)
+            st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
+            st.rerun()
+
+    with c2:
+        if excel_file and st.button("👁️ Ver Excel aquí", use_container_width=True):
+            df_excel = pd.read_excel(excel_file)
+            st.dataframe(df_excel, use_container_width=True, height=600)
+
+    with c3:
+        df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
+        st.download_button(
+            "⬇️ Descargar Excel actualizado",
+            data=df_to_excel_bytes(df_db, "licitaciones"),
+            file_name="SEGUIMIENTO_LIC_actualizado.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
+
+
+
+
+
 # =========================
 # PAGE 1: APOYOS
 # =========================
-if page == "Seguimiento de Apoyos":
+elif page == "Seguimiento de Apoyos":
+
     st.title("🤝 Seguimiento de Apoyos")
     st.caption("Registro y seguimiento de a quiénes se les dio apoyo, estatus, responsable y fechas clave.")
 
