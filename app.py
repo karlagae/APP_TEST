@@ -975,24 +975,94 @@ elif page == "Licitaciones en curso":
     # -------------------------
     # 4) SECCIONES BONITAS (Bases vs Solicitudes)
     # -------------------------
-    def _render_table(df_in: pd.DataFrame):
-        show = tidy_df(df_in.copy())
-        if show is None or show.empty:
-            st.info("Sin registros para mostrar.")
-            return
+    
+    def _render_table(df_in: pd.DataFrame, height: int = 520):
+    show = tidy_df(df_in.copy())
+    if show is None or show.empty:
+        st.info("Sin registros para mostrar.")
+        return
 
-        if "pidio_apoyo" in show.columns:
-            show["pidio_apoyo"] = show["pidio_apoyo"].apply(lambda x: "✅" if str(x) in ["1", "True", "true"] else "—")
-        if "carta_enviada" in show.columns:
-            show["carta_enviada"] = show["carta_enviada"].apply(lambda x: "📨" if str(x) in ["1", "True", "true"] else "—")
+    # 1) Quitar columnas que no quieres ver
+    drop_cols = ["id", "apoyo_id"]
+    for c in drop_cols:
+        if c in show.columns:
+            show = show.drop(columns=[c])
 
-        cols = [c for c in [
-            "id","clave","titulo","institucion","unidad","estado","integrador","monto_estimado",
-            "fecha_publicacion","junta_aclaraciones","apertura","fallo","firma_contrato",
-            "pidio_apoyo","carta_enviada","estatus","responsable","link"
-        ] if c in show.columns]
-        show = show[cols] if cols else show
-        st.dataframe(show, use_container_width=True, height=520)
+    # 2) Checks con íconos (se mantiene)
+    if "pidio_apoyo" in show.columns:
+        show["pidio_apoyo"] = show["pidio_apoyo"].apply(
+            lambda x: "✅" if str(x) in ["1", "True", "true"] else "—"
+        )
+    if "carta_enviada" in show.columns:
+        show["carta_enviada"] = show["carta_enviada"].apply(
+            lambda x: "📩" if str(x) in ["1", "True", "true"] else "—"
+        )
+
+    # 3) Orden de columnas (SIN id)
+    cols = [c for c in [
+        "clave","titulo","institucion","unidad","estado","integrador","monto_estimado",
+        "fecha_publicacion","junta_aclaraciones","apertura","fallo","firma_contrato",
+        "pidio_apoyo","carta_enviada","estatus","responsable","link"
+    ] if c in show.columns]
+    show = show[cols] if cols else show
+
+    # 4) Texto más presentable (sin MAYÚSCULAS feas)
+    #    (NO tocamos "clave" para no arruinar el formato)
+    nice_cols = ["titulo","institucion","unidad","estado","integrador","estatus","responsable"]
+    for c in nice_cols:
+        if c in show.columns:
+            show[c] = show[c].fillna("").astype(str)
+            show[c] = show[c].replace(["nan", "None"], "")
+            show[c] = show[c].apply(lambda s: s.strip().title() if s.strip() else "")
+
+    # 5) Encabezados bonitos
+    rename_map = {
+        "clave": "Clave",
+        "titulo": "Título",
+        "institucion": "Institución",
+        "unidad": "Unidad / Hospital",
+        "estado": "Estado",
+        "integrador": "Integrador",
+        "monto_estimado": "Monto estimado",
+        "fecha_publicacion": "Fecha publicación",
+        "junta_aclaraciones": "Junta aclaraciones",
+        "apertura": "Apertura",
+        "fallo": "Fallo",
+        "firma_contrato": "Firma contrato",
+        "pidio_apoyo": "Apoyo",
+        "carta_enviada": "Carta",
+        "estatus": "Estatus",
+        "responsable": "Responsable",
+        "link": "Link",
+    }
+    show = show.rename(columns={k: v for k, v in rename_map.items() if k in show.columns})
+
+    # 6) Mostrar SIN índice (quita 0,1,2...) ✅
+    st.dataframe(
+        show,
+        use_container_width=True,
+        height=height,
+        hide_index=True
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
     f_show = tidy_df(f)
 
