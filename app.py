@@ -118,6 +118,30 @@ def badge(estatus: str):
 
 
 
+# =========================
+# HELPERS DE UI (DASHBOARD)
+# =========================
+def section_header(title: str, subtitle: str = "", theme: str = "gray", chip: str = ""):
+    cls = {"blue": "section-blue", "orange": "section-orange", "gray": "section-gray"}.get(theme, "section-gray")
+    chip_html = f'<span class="chip">{chip}</span>' if chip else ""
+    st.markdown(
+        f"""
+        <div class="section {cls}">
+          <h3>{title}{chip_html}</h3>
+          <small>{subtitle}</small>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+def tidy_df(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.empty:
+        return df
+    out = df.copy()
+    out = out.replace({None: "", "None": "", "nan": "", "NaN": ""}).fillna("")
+    return out
+
+
 
 # =========================
 # HELPERS PARA RESUMEN / TABLERO
