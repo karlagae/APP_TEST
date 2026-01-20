@@ -241,6 +241,42 @@ st.sidebar.caption("Base local: SQLite (seguimiento.db)")
 st.markdown(
     """
     <style>
+
+
+/* =========================
+   KPI COLORES
+   ========================= */
+
+.kpi-blue {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+}
+
+.kpi-green {
+    background: linear-gradient(135deg, #065f46, #10b981);
+    color: white;
+}
+
+.kpi-yellow {
+    background: linear-gradient(135deg, #92400e, #f59e0b);
+    color: white;
+}
+
+.kpi-light {
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    color: #0f172a;
+}
+
+/* que el texto interno herede bien */
+.kpi-blue .kpi-lbl,
+.kpi-green .kpi-lbl,
+.kpi-yellow .kpi-lbl {
+    color: rgba(255,255,255,.85);
+}
+
+
+
+
     /* ancho y aire */
     .block-container {
         padding-top: 1.3rem;
