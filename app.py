@@ -215,127 +215,107 @@ st.sidebar.caption("Base local: SQLite (seguimiento.db)")
 # =========================
 # ESTILO (Dashboard look)
 # =========================
-st.markdown("""
-<style>
-/* ancho y aire */
-.block-container { padding-top: 1.3rem; padding-bottom: 2rem; max-width: 1400px; }
+st.markdown(
+    """
+    <style>
+    /* ancho y aire */
+    .block-container {
+        padding-top: 1.3rem;
+        padding-bottom: 2rem;
+        max-width: 1400px;
+    }
 
-/* barra de filtros */
-.filters-row [data-testid="stTextInput"], 
-.filters-row [data-testid="stSelectbox"] { margin-bottom: 0px; }
+    /* barra de filtros */
+    .filters-row [data-testid="stTextInput"],
+    .filters-row [data-testid="stSelectbox"] {
+        margin-bottom: 0px;
+    }
 
-/* tarjetas KPI */
-.kpi-wrap{
-  border-radius: 14px;
-  padding: 16px 18px;
-  background: white;
-  border: 1px solid #e9edf5;
-  box-shadow: 0 6px 18px rgba(15,23,42,.06);
-}
-.kpi-num{
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.0;
-  margin: 0;
-}
-.kpi-lbl{
-  font-size: 14px;
-  opacity: .75;
-  margin-top: 6px;
-}
+    /* tarjetas KPI */
+    .kpi-wrap {
+        border-radius: 14px;
+        padding: 16px 18px;
+        background: white;
+        border: 1px solid #e9edf5;
+        box-shadow: 0 6px 18px rgba(15,23,42,.06);
+    }
 
-/* tabs más limpios */
-button[data-baseweb="tab"]{
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-}
+    .kpi-num {
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.0;
+        margin: 0;
+    }
 
-/* tabla */
-[data-testid="stDataFrame"] { border: 1px solid #eef2f7; border-radius: 12px; overflow: hidden; }
-</style>
-/* ancho y aire */
-.block-container { padding-top: 1.3rem; padding-bottom: 2rem; max-width: 1400px; }
+    .kpi-lbl {
+        font-size: 14px;
+        opacity: .75;
+        margin-top: 6px;
+    }
 
-/* barra de filtros */
-.filters-row [data-testid="stTextInput"], 
-.filters-row [data-testid="stSelectbox"] { margin-bottom: 0px; }
+    /* tabs más limpios */
+    button[data-baseweb="tab"] {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
 
-/* tarjetas KPI */
-.kpi-wrap{
-  border-radius: 14px;
-  padding: 16px 18px;
-  background: white;
-  border: 1px solid #e9edf5;
-  box-shadow: 0 6px 18px rgba(15,23,42,.06);
-}
-.kpi-num{
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.0;
-  margin: 0;
-}
-.kpi-lbl{
-  font-size: 14px;
-  opacity: .75;
-  margin-top: 6px;
-}
+    /* tabla */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-/* tabs más limpios */
-button[data-baseweb="tab"]{
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-}
+    /* ================= NUEVO ESTILO ================= */
 
-/* tabla */
-[data-testid="stDataFrame"] { 
-  border: 1px solid #eef2f7; 
-  border-radius: 12px; 
-  overflow: hidden; 
-}
+    .section {
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin: 8px 0 10px 0;
+        border: 1px solid rgba(15,23,42,.08);
+        box-shadow: 0 6px 18px rgba(15,23,42,.06);
+    }
 
-/* =========================
-   NUEVO ESTILO (dashboard)
-   ========================= */
+    .section h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+    }
 
-/* secciones con color */
-.section{
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin: 8px 0 10px 0;
-  border: 1px solid rgba(15,23,42,.08);
-  box-shadow: 0 6px 18px rgba(15,23,42,.06);
-}
-.section h3{ margin:0; font-size: 16px; font-weight: 800; }
-.section small{ opacity:.75; }
+    .section small {
+        opacity: .75;
+    }
 
-.section-blue{
-  background: linear-gradient(90deg, rgba(59,130,246,.18), rgba(59,130,246,.05));
-}
-.section-orange{
-  background: linear-gradient(90deg, rgba(245,158,11,.20), rgba(245,158,11,.06));
-}
-.section-gray{
-  background: linear-gradient(90deg, rgba(148,163,184,.22), rgba(148,163,184,.06));
-}
+    .section-blue {
+        background: linear-gradient(90deg, rgba(59,130,246,.18), rgba(59,130,246,.05));
+    }
 
-/* chips */
-.chip{
-  display:inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid rgba(15,23,42,.10);
-  background: rgba(255,255,255,.65);
-  margin-left: 8px;
-}
-</style>
+    .section-orange {
+        background: linear-gradient(90deg, rgba(245,158,11,.20), rgba(245,158,11,.06));
+    }
+
+    .section-gray {
+        background: linear-gradient(90deg, rgba(148,163,184,.22), rgba(148,163,184,.06));
+    }
+
+    .chip {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid rgba(15,23,42,.10);
+        background: rgba(255,255,255,.65);
+        margin-left: 8px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 
 
-                             
-""", unsafe_allow_html=True)
 
 # =========================
 # PAGE 0: EXCEL (BASE OFICIAL)
