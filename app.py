@@ -227,8 +227,15 @@ init_db()
 st.sidebar.title("📌 Menú")
 page = st.sidebar.radio(
     "Ir a:",
-    ["Excel (Base oficial)", "Licitaciones en curso", "Seguimiento de Apoyos", "Power BI", "Calendario"],
-    index=0
+    [
+        "Excel (Base oficial)",
+        "Licitaciones en curso",
+        "Seguimiento de Apoyos",
+        "Resumen",
+        "Tablero",
+        "Power BI",
+        "Calendario",
+    ]
 )
 
 
