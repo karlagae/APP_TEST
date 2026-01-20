@@ -934,30 +934,30 @@ elif page == "Licitaciones en curso":
     # -------------------------
     # (Por ahora: tabs visuales; después conectamos “Bases” vs “Solicitudes...” cuando guardemos TIPO LIC)
 
-    # -------------------------
-# SECCIONES BONITAS (Bases vs Solicitudes)
-# -------------------------
-f_show = tidy_df(f)
+        # -------------------------
+     # SECCIONES BONITAS (Bases vs Solicitudes)
+     # -------------------------
+     f_show = tidy_df(f)
 
-# Separación simple por clave (sin depender de DB)
-bases_df = f_show[f_show["clave"].astype(str).str.contains(r"(^LA-|^LP-|^PC-|^LV-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
-sc_df    = f_show[f_show["clave"].astype(str).str.contains(r"(^SC-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
+    # Separación simple por clave (sin depender de DB)
+    bases_df = f_show[f_show["clave"].astype(str).str.contains(r"(^LA-|^LP-|^PC-|^LV-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
+    sc_df    = f_show[f_show["clave"].astype(str).str.contains(r"(^SC-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
 
-# fallback si por formato se vacía
-if bases_df.empty and not f_show.empty:
+    # fallback si por formato se vacía
+    if bases_df.empty and not f_show.empty:
     bases_df = f_show.copy()
 
-section_header("📁 Bases", "Licitaciones tipo base (según clave).", theme="blue", chip=str(len(bases_df)))
-_render_table(bases_df)
+    section_header("📁 Bases", "Licitaciones tipo base (según clave).", theme="blue", chip=str(len(bases_df)))
+    _render_table(bases_df)
 
-st.markdown("")
+    st.markdown("")
 
-section_header("🧾 Solicitudes de cotización", "Solicitudes tipo SC (según clave).", theme="orange", chip=str(len(sc_df)))
-_render_table(sc_df)
+    section_header("🧾 Solicitudes de cotización", "Solicitudes tipo SC (según clave).", theme="orange", chip=str(len(sc_df)))
+    _render_table(sc_df)
 
-st.markdown("---")
-section_header("📋 Lista completa (filtrada)", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
-_render_table(f_show)
+    st.markdown("---")
+    section_header("📋 Lista completa (filtrada)", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
+    _render_table(f_show)
 
 
 
