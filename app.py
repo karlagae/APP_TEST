@@ -933,50 +933,41 @@ elif page == "Licitaciones en curso":
     # 4) TABS + TABLA GRANDE
     # -------------------------
     # (Por ahora: tabs visuales; después conectamos “Bases” vs “Solicitudes...” cuando guardemos TIPO LIC)
-    tab_all, tab_bases, tab_sc = st.tabs(["Todas", "Bases", "Solicitudes de Cotización"])
 
-    def _render_table(df_in: pd.DataFrame):
-        show = df_in.copy()
-        if "pidio_apoyo" in show.columns:
-            show["pidio_apoyo"] = show["pidio_apoyo"].apply(lambda x: "✅" if x == 1 else "—")
-        if "carta_enviada" in show.columns:
-            show["carta_enviada"] = show["carta_enviada"].apply(lambda x: "📨" if x == 1 else "—")
+    # -------------------------
+# SECCIONES BONITAS (Bases vs Solicitudes)
+# -------------------------
+f_show = tidy_df(f)
 
-        # orden de columnas “bonito”
-        cols = [c for c in ["id","clave","titulo","institucion","unidad","estado","integrador","monto_estimado","fecha_publicacion","junta_aclaraciones","apertura","fallo","pidio_apoyo","carta_enviada","estatus","responsable"] if c in show.columns]
-        show = show[cols] if cols else show
+# Separación simple por clave (sin depender de DB)
+bases_df = f_show[f_show["clave"].astype(str).str.contains(r"(^LA-|^LP-|^PC-|^LV-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
+sc_df    = f_show[f_show["clave"].astype(str).str.contains(r"(^SC-)", regex=True, na=False)].copy() if "clave" in f_show.columns else f_show.head(0)
 
-        st.dataframe(show, use_container_width=True, height=540)
+# fallback si por formato se vacía
+if bases_df.empty and not f_show.empty:
+    bases_df = f_show.copy()
 
-        e1, e2 = st.columns(2)
-        with e1:
-            st.download_button(
-                "⬇️ Descargar Excel",
-                data=df_to_excel_bytes(df_in, "licitaciones"),
-                file_name="licitaciones.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-        with e2:
-            st.download_button(
-                "⬇️ Descargar CSV",
-                data=df_in.to_csv(index=False).encode("utf-8"),
-                file_name="licitaciones.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
+section_header("📁 Bases", "Licitaciones tipo base (según clave).", theme="blue", chip=str(len(bases_df)))
+_render_table(bases_df)
 
-    with tab_all:
-        _render_table(f)
+st.markdown("")
 
-    with tab_bases:
-        # Placeholder (cuando tengas TIPO LIC guardado aquí lo filtramos)
-        _render_table(f)
+section_header("🧾 Solicitudes de cotización", "Solicitudes tipo SC (según clave).", theme="orange", chip=str(len(sc_df)))
+_render_table(sc_df)
 
-    with tab_sc:
-        # Placeholder (cuando tengas TIPO LIC guardado aquí lo filtramos)
-        _render_table(f)
+st.markdown("---")
+section_header("📋 Lista completa (filtrada)", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
+_render_table(f_show)
 
+
+
+
+
+
+
+
+
+    
 
 
 
