@@ -41,31 +41,90 @@ def init_db():
         """))
 
         conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS licitaciones (
+        # ⚠️ RESET SOLO PARA LICITACIONES (se vuelve a poblar desde el Excel maestro)
+        conn.execute(text("DROP TABLE IF EXISTS licitaciones;"))
+
+        conn.execute(text("""
+        CREATE TABLE licitaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT, 
-            clave TEXT,
+
+            -- Clasificación (Excel)
+            tipo TEXT,                 -- LICITACION / BASES / PREBASES / ESTUDIO / INVITACION...
+            tipo2 TEXT,                -- INDIRECTA / DIRECTA (si lo usas)
+
+            -- Identificación
+            clave TEXT UNIQUE,
             titulo TEXT,
+
+            -- Convocante / ubicación
             institucion TEXT,
+            convocante_tipo TEXT,
             unidad TEXT,
+            region_instituto TEXT,
             estado TEXT,
+            zona_ventas TEXT,
+
+            -- Comercial
+            rep_legal TEXT,
             integrador TEXT,
+            distribuidor TEXT,
+            presencia_werfen TEXT,
+            modelos TEXT,
+            licitante_ganador TEXT,
+            lineas_negocio TEXT,
+            directo_distribuidor TEXT,
+
+            -- Fechas / hitos
             monto_estimado REAL,
             fecha_publicacion TEXT,
+            presentar_cotizacion TEXT,
             junta_aclaraciones TEXT,
+            presentacion_tecnica TEXT,
+            propuesta_economica TEXT,
             apertura TEXT,
             fallo TEXT,
             firma_contrato TEXT,
+
+            -- Admin / checks (texto)
+            pendientes_admin TEXT,
+            solicita_apoyo_txt TEXT,
+            razon_social TEXT,
+            evaluacion_riesgos TEXT,
+            rentabilidad TEXT,
+            cartas TEXT,
+            manuales TEXT,
+
+            -- Estatus
+            estatus_licitacion TEXT,
+            ganada_perdida TEXT,
+            estatus TEXT,
+            responsable TEXT,
+
+            -- Vigencias / SAP / expediente
+            vigencia_inicio TEXT,
+            vigencia_termino TEXT,
+            no_concurso_sap TEXT,
+            cliente_sap TEXT,
+            expediente_compramex TEXT,
+            lic_electronica_presencial TEXT,
+            expediente_digital_completo TEXT,
+
+            -- Campos que tu app ya usa (para no romper pantallas)
             pidio_apoyo INTEGER,
             apoyo_id INTEGER,
             carta_enviada INTEGER,
-            razon_social TEXT,
-            estatus TEXT,
-            responsable TEXT,
             link TEXT,
             notas TEXT
         );
         """))
+
+
+
+
+
+
+
+            
 
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS powerbi_settings (
