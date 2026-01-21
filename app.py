@@ -1066,12 +1066,32 @@ elif page == "Licitaciones en curso":
 
     f_show = tidy_df(f)
 
-    # Separación por clave (sin depender de DB)
-    if "clave" in f_show.columns:
-        bases_df = f_show[f_show["clave"].astype(str).str.contains(r"(^LA-|^LP-|^PC-|^LV-)", regex=True, na=False)].copy()
-        sc_df    = f_show[f_show["clave"].astype(str).str.contains(r"(^SC-)", regex=True, na=False)].copy()
+    # ✅ Separación por TIPO (más realista que por clave)
+    # Normalizamos tipo
+    if "tipo" in f_show.columns:
+        f_show["tipo_norm"] = f_show["tipo"].fillna("").astype(str).str.strip().str.upper()
     else:
-        bases_df, sc_df = f_show.head(0), f_show.head(0)
+        f_show["tipo_norm"] = ""
+
+    bases_df     = f_show[f_show["tipo_norm"].isin(["BASES", "LICITACION"])].copy()
+    sc_df        = f_show[f_show["tipo_norm"].isin(["SOLICITUD DE COTIZACION", "SOLICITUD DE COTIZACIÓN"])].copy()
+    prebases_df  = f_show[f_show["tipo_norm"].isin(["PREBASES"])].copy()
+    estudio_df   = f_show[f_show["tipo_norm"].isin(["ESTUDIO DE MERCADO"])].copy()
+    inv3_df      = f_show[f_show["tipo_norm"].isin(["INVITACION A TRES PERSONAS", "INVITACIÓN A TRES PERSONAS"])].copy()
+
+    # fallback: si tipo viene vacío, usamos clave
+    if (bases_df.empty and sc_df.empty and prebases_df.empty and estudio_df.empty and inv3_df.empty) and "clave" in f_show.columns:
+        clave = f_show["clave"].fillna("").astype(str)
+        bases_df = f_show[clave.str.contains(r"(^LA-|^LP-|^PC-|^LV-)", regex=True, na=False)].copy()
+        sc_df    = f_show[clave.str.contains(r"(^SC-)", regex=True, na=False)].copy()
+
+
+
+
+
+
+
+
 
     # Fallback: si por alguna razón se vacía, muestra todo en Bases
     if bases_df.empty and not f_show.empty:
@@ -1084,7 +1104,23 @@ elif page == "Licitaciones en curso":
     section_header("🧾 Solicitudes de cotización", "Solicitudes tipo SC (según clave).", theme="orange", chip=str(len(sc_df)))
     _render_table(sc_df)
 
+
+
     st.markdown("---")
+    section_header("📝 Prebases", "Documentos previos a la licitación.", theme="gray", chip=str(len(prebases_df)))
+    _render_table(prebases_df)
+
+    st.markdown("")
+
+    section_header("📊 Estudio de mercado", "Investigación/sondeo previo.", theme="gray", chip=str(len(estudio_df)))
+    _render_table(estudio_df)
+
+    st.markdown("")
+
+    section_header("👥 Invitación a tres personas", "Procedimiento por invitación.", theme="gray", chip=str(len(inv3_df)))
+    _render_table(inv3_df)
+
+    
     section_header("📋 Lista completa (filtrada)", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
     _render_table(f_show)
 
