@@ -527,19 +527,19 @@ if page == "BASE DE DATOS":
     c1, c2, c3 = st.columns([1, 1, 1])
 
     with c1:
-        if excel_file and st.button("✅ Importar / Actualizar en la base", use_container_width=True):
+        if excel_file and st.button("✔️ ACTUALIZAR BASE", use_container_width=True):
             df_excel = pd.read_excel(excel_file)
             ins, upd = upsert_licitaciones_from_excel(df_excel)
             st.success(f"Importación lista. Insertadas: {ins} | Actualizadas: {upd}")
             st.rerun()
 
     with c2:
-        ver_excel = st.toggle("👁️ Ver Excel aquí", value=True, disabled=excel_file is None)
+        ver_excel = st.toggle("👁️ VISUALIZAR ARCHIVO", value=True, disabled=excel_file is None)
 
     with c3:
         df_db = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
         st.download_button(
-            "⬇️ Descargar Excel actualizado",
+            "⬇️ DESCARGAR BASE ACTUALIZADA",
             data=df_to_excel_bytes(df_db, "licitaciones"),
             file_name="SEGUIMIENTO_LIC_actualizado.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -547,7 +547,7 @@ if page == "BASE DE DATOS":
         )
 
     st.markdown("---")
-    st.subheader("📊 Visor del Excel maestro")
+    st.subheader("📊 VISUALIZACIÓN GENERAL")
 
     if excel_file and ver_excel:
         df_excel = pd.read_excel(excel_file)
@@ -562,8 +562,8 @@ if page == "BASE DE DATOS":
 # =========================
 elif page == "SOLICITUDES DE APOYO":
 
-    st.title("🤝 Seguimiento de Apoyos")
-    st.caption("Registro y seguimiento de a quiénes se les dio apoyo, estatus, responsable y fechas clave.")
+    st.title("🤝 SOLICITUDES DE APOYO")
+    st.caption("SEGUIMIENTO DE INTEGRADORES.")
 
     colA, colB = st.columns([1.05, 1.6], gap="large")
 
@@ -620,7 +620,7 @@ elif page == "SOLICITUDES DE APOYO":
 
         c1, c2, c3 = st.columns(3)
         with c1:
-            if st.button("💾 Guardar", use_container_width=True):
+            if st.button("💾 GUARDAR", use_container_width=True):
                 payload = {
                     "fecha_registro": safe_date_str(fecha_registro),
                     "institucion": institucion.strip(),
@@ -675,19 +675,19 @@ elif page == "SOLICITUDES DE APOYO":
                 st.rerun()
 
         with c2:
-            if st.button("🧹 Limpiar (nuevo)", use_container_width=True):
+            if st.button("🧹 LIMPIAR", use_container_width=True):
                 st.rerun()
 
         with c3:
             if edit_id is not None:
-                if st.button("🗑️ Eliminar", use_container_width=True):
+                if st.button("🗑️ ELIMINAR", use_container_width=True):
                     with engine.begin() as conn:
                         conn.execute(text("DELETE FROM apoyos WHERE id=:id;"), {"id": int(edit_id)})
                     st.warning("Apoyo eliminado.")
                     st.rerun()
 
     with colB:
-        st.subheader("📋 Lista de apoyos")
+        st.subheader("📋 LISTA")
 
         # Filtros
         f1, f2, f3, f4 = st.columns([1,1,1,1])
@@ -734,7 +734,7 @@ elif page == "SOLICITUDES DE APOYO":
             exp1, exp2 = st.columns(2)
             with exp1:
                 st.download_button(
-                    "⬇️ Descargar Excel",
+                    "⬇️ DESCARGAR EXCEL",
                     data=df_to_excel_bytes(df, "apoyos"),
                     file_name="apoyos.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -742,7 +742,7 @@ elif page == "SOLICITUDES DE APOYO":
                 )
             with exp2:
                 st.download_button(
-                    "⬇️ Descargar CSV",
+                    "⬇️ DESCARGAR CSV",
                     data=df.to_csv(index=False).encode("utf-8"),
                     file_name="apoyos.csv",
                     mime="text/csv",
@@ -758,7 +758,7 @@ elif page == "SOLICITUDES DE APOYO":
 # PAGE: LICITACIONES EN CURSO (Dashboard)
 # =========================
 elif page == "LICITACIONES EN CURSO":
-    st.title("📄 Licitaciones en curso")
+    st.title("📄 LICITACIONES EN CURSO")
     st.caption("Aquí solo se muestra lo guardado en la base (SQLite). Para cargar masivo: Excel (Base oficial) → ✅ Importar / Actualizar en la base.")
 
     df = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
