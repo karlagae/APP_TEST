@@ -19,7 +19,12 @@ engine = create_engine(f"sqlite:///{DB_PATH}", future=True)
 # HELPERS
 # =========================
 def init_db():
+    """Inicializa la base SQLite.
+    Nota: NO borramos la tabla 'licitaciones' automáticamente (para que no pierdas datos).
+    Si quieres resetearla, agrega un botón y ejecuta DROP TABLE manualmente desde la UI.
+    """
     with engine.begin() as conn:
+        # Tabla de apoyos
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS apoyos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,12 +45,9 @@ def init_db():
         );
         """))
 
+        # Tabla de licitaciones (con columnas extendidas)
         conn.execute(text("""
-        # ⚠️ RESET SOLO PARA LICITACIONES (se vuelve a poblar desde el Excel maestro)
-        conn.execute(text("DROP TABLE IF EXISTS licitaciones;"))
-
-        conn.execute(text("""
-        CREATE TABLE licitaciones (
+        CREATE TABLE IF NOT EXISTS licitaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             -- Clasificación (Excel)
@@ -118,14 +120,7 @@ def init_db():
         );
         """))
 
-
-
-
-
-
-
-            
-
+        # PowerBI settings
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS powerbi_settings (
             id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -138,6 +133,7 @@ def init_db():
         INSERT OR IGNORE INTO powerbi_settings (id, embed_url)
         VALUES (1, '');
         """))
+
 
 def df_to_excel_bytes(df: pd.DataFrame, sheet_name="data") -> bytes:
     output = BytesIO()
@@ -608,6 +604,16 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
 if page == "BASE DE DATOS":
     st.title("⛃ BASE DE DATOS")
     st.caption("Aquí cargas el Excel maestro. La app lo usa como base para licitaciones y seguimiento.")
+
+    # Opcional: resetear SOLO licitaciones (por si quieres volver a importar desde cero)
+    with st.expander("🧨 Opciones avanzadas", expanded=False):
+        st.warning("Esto borra TODAS las licitaciones de la base local (SQLite). Después vuelve a importar el Excel.")
+        if st.button("🗑️ Resetear tabla 'licitaciones'", type="secondary", use_container_width=True):
+            with engine.begin() as conn:
+                conn.execute(text("DROP TABLE IF EXISTS licitaciones;"))
+            st.success("Tabla 'licitaciones' eliminada. Recarga el Excel con ✅ ACTUALIZAR BASE.")
+            st.rerun()
+
 
     excel_file = st.file_uploader("Sube tu Excel maestro", type=["xlsx"], key="excel_base")
 
