@@ -293,10 +293,44 @@ def timeline_html(dias_ja, dias_ap, dias_fa, ventana=60):
 
 
 
+
+# =========================
+# DB SCHEMA MIGRATION (safe)
+# =========================
+def _ensure_column(table: str, col: str, coltype: str = "TEXT"):
+    """Add a column if it does not exist (SQLite). Safe to call every run."""
+    with engine.begin() as conn:
+        cols = [row[1] for row in conn.execute(text(f"PRAGMA table_info({table});")).fetchall()]
+        if col not in cols:
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {coltype};"))
+
+def ensure_schema():
+    # Ensure core columns used by the app exist even if the DB was created with an older schema
+    _ensure_column("licitaciones", "tipo", "TEXT")
+    _ensure_column("licitaciones", "clave", "TEXT")
+    _ensure_column("licitaciones", "titulo", "TEXT")
+    _ensure_column("licitaciones", "institucion", "TEXT")
+    _ensure_column("licitaciones", "unidad", "TEXT")
+    _ensure_column("licitaciones", "estado", "TEXT")
+    _ensure_column("licitaciones", "integrador", "TEXT")
+    _ensure_column("licitaciones", "monto_estimado", "REAL")
+    _ensure_column("licitaciones", "fecha_publicacion", "TEXT")
+    _ensure_column("licitaciones", "junta_aclaraciones", "TEXT")
+    _ensure_column("licitaciones", "apertura", "TEXT")
+    _ensure_column("licitaciones", "fallo", "TEXT")
+    _ensure_column("licitaciones", "firma_contrato", "TEXT")
+    _ensure_column("licitaciones", "razon_social", "TEXT")
+    _ensure_column("licitaciones", "estatus", "TEXT")
+    _ensure_column("licitaciones", "responsable", "TEXT")
+    _ensure_column("licitaciones", "link", "TEXT")
+    _ensure_column("licitaciones", "notas", "TEXT")
+
+
 # =========================
 # DB INIT
 # =========================
 init_db()
+ensure_schema()
 
 # =========================
 # UI: SIDEBAR NAV
