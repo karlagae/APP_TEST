@@ -630,8 +630,6 @@ elif page == "SOLICITUDES DE APOYO":
             if st.button("💾 GUARDAR", use_container_width=True):
                 payload = {
                     "fecha_registro": safe_date_str(fecha_registro),
-                    "tipo": str(r.get(col_tipo, "") or "").strip() if col_tipo else "",
-
                     "institucion": institucion.strip(),
                     "unidad": unidad.strip(),
                     "contacto": contacto.strip(),
@@ -917,6 +915,7 @@ elif page == "LICITACIONES EN CURSO":
 
         if guardar:
             payload = {
+                "tipo": current.get("tipo","").strip() if current else "",
                 "clave": clave.strip(),
                 "titulo": titulo.strip(),
                 "institucion": institucion.strip(),
@@ -943,11 +942,11 @@ elif page == "LICITACIONES EN CURSO":
                 if edit_id is None:
                     conn.execute(text("""
                         INSERT INTO licitaciones (
-                            clave, titulo, institucion, unidad, estado, integrador, monto_estimado,
+                            tipo, clave, titulo, institucion, unidad, estado, integrador, monto_estimado,
                             fecha_publicacion, junta_aclaraciones, apertura, fallo, firma_contrato,
                             pidio_apoyo, apoyo_id, carta_enviada, razon_social, estatus, responsable, link, notas
                         ) VALUES (
-                            :clave, :titulo, :institucion, :unidad, :estado, :integrador, :monto_estimado,
+                            :tipo, :clave, :titulo, :institucion, :unidad, :estado, :integrador, :monto_estimado,
                             :fecha_publicacion, :junta_aclaraciones, :apertura, :fallo, :firma_contrato,
                             :pidio_apoyo, :apoyo_id, :carta_enviada, :razon_social, :estatus, :responsable, :link, :notas
                         );
@@ -957,6 +956,7 @@ elif page == "LICITACIONES EN CURSO":
                     payload["id"] = int(edit_id)
                     conn.execute(text("""
                         UPDATE licitaciones SET
+                            tipo=:tipo,
                             clave=:clave,
                             titulo=:titulo,
                             institucion=:institucion,
