@@ -759,12 +759,12 @@ elif page == "SOLICITUDES DE APOYO":
 # =========================
 elif page == "LICITACIONES EN CURSO":
     st.title("📄 LICITACIONES EN CURSO")
-    st.caption("Aquí solo se muestra lo guardado en la base (SQLite). Para cargar masivo: Excel (Base oficial) → ✅ Importar / Actualizar en la base.")
+    st.caption("Aquí solo se muestra lo guardado en la base (SQLite). Para cargar masivo: Excel (Base oficial) → ✅ ACTUALIZAR BASE.")
 
     df = sql_df("SELECT * FROM licitaciones ORDER BY id DESC;")
 
     if df.empty:
-        st.warning("Aún no hay licitaciones en la base. Ve a: Excel (Base oficial) → sube tu Excel → ✅ Importar / Actualizar en la base.")
+        st.warning("Aún no hay licitaciones en la base. Ve a: BASE DE DATOS → sube tu archivo → ✅ ACTUALIZAR BASE.")
         st.stop()
 
     # -------------------------
@@ -775,7 +775,7 @@ elif page == "LICITACIONES EN CURSO":
         st.markdown('<div class="filters-row">', unsafe_allow_html=True)
 
         with fcol1:
-            q = st.text_input("🔎 Buscar licitación…", value="", placeholder="clave / título / institución / unidad / responsable")
+            q = st.text_input("🔎 Buscar…", value="", placeholder="CLAVE / TIPO / INSTITUCIÓN / UNIDAD / ESTADO")
 
         with fcol2:
             inst_opts = ["(Todas)"] + sorted([x for x in df["institucion"].fillna("").unique().tolist() if str(x).strip() != ""])
@@ -1186,9 +1186,9 @@ elif page == "RESUMEN":
 
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Total", total)
-        k2.metric("🔴 Vencidas", vencidas)
-        k3.metric("🟠 Hoy", hoy)
-        k4.metric("🟡 En 7 días", en7)
+        k2.metric("🔴 VENCIDAS", vencidas)
+        k3.metric("🟠 HOY", hoy)
+        k4.metric("🟡 EN 7 DÍAS", en7)
 
         st.markdown("---")
         st.subheader("🚨 Semáforo de urgencia")
@@ -1199,17 +1199,17 @@ elif page == "RESUMEN":
 
         a, b, c = st.columns(3, gap="large")
         with a:
-            st.markdown("### 🔴 Vencido")
+            st.markdown("### 🔴 VENCIDAS")
             st.caption("Eventos que ya pasaron.")
             st.dataframe(venc_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
                          use_container_width=True, height=260)
         with b:
-            st.markdown("### 🟠 Hoy")
+            st.markdown("### 🟠 HOY")
             st.caption("Eventos que caen hoy.")
             st.dataframe(hoy_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
                          use_container_width=True, height=260)
         with c:
-            st.markdown("### 🟡 En 7 días")
+            st.markdown("### 🟡 EN 7 DIAS")
             st.caption("Eventos próximos (1 a 7 días).")
             st.dataframe(en7_df[["clave","institucion","unidad","responsable","dias_min"]].head(12),
                          use_container_width=True, height=260)
@@ -1350,17 +1350,17 @@ elif page == "DASHBOARD":
     settings = sql_df("SELECT * FROM powerbi_settings WHERE id=1;")
     current_url = settings["embed_url"].iloc[0] if not settings.empty else ""
 
-    st.subheader("⚙️ Configuración")
+    st.subheader("⚙️ CONFIGURACIÓN")
     new_url = st.text_input("Power BI Embed URL", value=current_url, help="Ejemplo: https://app.powerbi.com/view?r=... o embed con reportId")
 
-    if st.button("💾 Guardar URL"):
+    if st.button("💾 GUARDAR URL"):
         with engine.begin() as conn:
             conn.execute(text("UPDATE powerbi_settings SET embed_url=:u WHERE id=1;"), {"u": new_url.strip()})
         st.success("URL guardada.")
         st.rerun()
 
     st.markdown("---")
-    st.subheader("👁️ Vista del reporte")
+    st.subheader("👁️ VISUALIZACIÓN DEL REPORTE")
 
     if current_url.strip():
         # Iframe
@@ -1372,7 +1372,7 @@ elif page == "DASHBOARD":
 # PAGE 4: CALENDARIO
 # =========================
 elif page == "CALENDARIO":
-    st.title("🗓️ Calendario de licitaciones")
+    st.title("🗓️ CALENDARIO DE LICITACIONES")
     st.caption("Se arma desde las fechas de: Publicación, Junta de Aclaraciones, Apertura, Fallo, Firma de Contrato.")
 
     lic = sql_df("SELECT id, clave, titulo, institucion, unidad, responsable, link, fecha_publicacion, junta_aclaraciones, apertura, fallo, firma_contrato FROM licitaciones;")
@@ -1397,17 +1397,17 @@ elif page == "CALENDARIO":
                     pass
 
         for _, r in lic.iterrows():
-            add_event(r, "fecha_publicacion", "📌 Publicación")
-            add_event(r, "junta_aclaraciones", "🗣️ Junta")
-            add_event(r, "apertura", "📂 Apertura")
-            add_event(r, "fallo", "🏁 Fallo")
-            add_event(r, "firma_contrato", "✍️ Firma")
+            add_event(r, "fecha_publicacion", "📌 PUBLICACIÓN")
+            add_event(r, "junta_aclaraciones", "🗣️ JA")
+            add_event(r, "apertura", "📂 APTYE")
+            add_event(r, "fallo", "🏁 FALLO")
+            add_event(r, "firma_contrato", "✍️ FIRMA DE CONTRATO")
 
     # Intentar calendario visual
     try:
         from streamlit_calendar import calendar
 
-        st.subheader("📅 Vista calendario")
+        st.subheader("📅 CALENDARIO")
         options = {
             "initialView": "dayGridMonth",
             "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,timeGridWeek,timeGridDay"},
