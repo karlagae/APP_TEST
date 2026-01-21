@@ -425,6 +425,8 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
 
     # Try to map columns (update the candidates anytime your Excel changes)
     col_clave = _pick_col(df.columns, "NUMERO DE LA LICITACIÓN", "NUMERO DE LA LICITACION", "CLAVE", "EXPEDIENTE")
+    col_tipo = _pick_col(df.columns, "TIPO")
+
     col_titulo = _pick_col(df.columns, "TITULO", "DESCRIPCION", "ESPECIALIDAD SERV.INT (LAB)")
     col_institucion = _pick_col(df.columns, "CONVOCANTE", "INSTITUCION")
     col_unidad = _pick_col(df.columns, "UNIDAD", "HOSPITAL")
@@ -458,6 +460,8 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
         payload = {
             "clave": clave,
             "titulo": str(r.get(col_titulo, "") or "").strip() if col_titulo else "",
+            "tipo": str(r.get(col_tipo, "") or "").strip() if col_tipo else "",
+
             "institucion": str(r.get(col_institucion, "") or "").strip() if col_institucion else "",
             "unidad": str(r.get(col_unidad, "") or "").strip() if col_unidad else "",
             "estado": str(r.get(col_estado, "") or "").strip() if col_estado else "",
@@ -484,7 +488,10 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
                 payload["id"] = int(exists[0])
                 conn.execute(text("""
                     UPDATE licitaciones SET
+                        tipo=:tipo,
+
                         titulo=:titulo,
+                        
                         institucion=:institucion,
                         unidad=:unidad,
                         estado=:estado,
@@ -504,11 +511,11 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
             else:
                 conn.execute(text("""
                     INSERT INTO licitaciones (
-                        clave, titulo, institucion, unidad, estado, integrador, monto_estimado,
+                        tipo, clave, titulo, institucion, unidad, estado, integrador, monto_estimado,
                         fecha_publicacion, junta_aclaraciones, apertura, fallo, firma_contrato,
                         pidio_apoyo, apoyo_id, carta_enviada, razon_social, estatus, responsable, link, notas
                     ) VALUES (
-                        :clave, :titulo, :institucion, :unidad, :estado, :integrador, :monto_estimado,
+                        :tipo, :clave, :titulo, :institucion, :unidad, :estado, :integrador, :monto_estimado,
                         :fecha_publicacion, :junta_aclaraciones, :apertura, :fallo, :firma_contrato,
                         :pidio_apoyo, :apoyo_id, :carta_enviada, :razon_social, :estatus, :responsable, :link, :notas
                     );
@@ -519,7 +526,7 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
 
 
 if page == "BASE DE DATOS":
-    st.title("📘 Excel (Base oficial)")
+    st.title("⛃ BASE DE DATOS")
     st.caption("Aquí cargas el Excel maestro. La app lo usa como base para licitaciones y seguimiento.")
 
     excel_file = st.file_uploader("Sube tu Excel maestro", type=["xlsx"], key="excel_base")
@@ -623,6 +630,8 @@ elif page == "SOLICITUDES DE APOYO":
             if st.button("💾 GUARDAR", use_container_width=True):
                 payload = {
                     "fecha_registro": safe_date_str(fecha_registro),
+                    "tipo": str(r.get(col_tipo, "") or "").strip() if col_tipo else "",
+
                     "institucion": institucion.strip(),
                     "unidad": unidad.strip(),
                     "contacto": contacto.strip(),
