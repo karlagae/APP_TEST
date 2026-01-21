@@ -43,6 +43,7 @@ def init_db():
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS licitaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo TEXT, 
             clave TEXT,
             titulo TEXT,
             institucion TEXT,
