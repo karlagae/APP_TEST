@@ -517,7 +517,7 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
     return inserted, updated
 
 
-if page == "Excel (Base oficial)":
+if page == "BASE DE DATOS":
     st.title("📘 Excel (Base oficial)")
     st.caption("Aquí cargas el Excel maestro. La app lo usa como base para licitaciones y seguimiento.")
 
@@ -559,7 +559,7 @@ if page == "Excel (Base oficial)":
 # =========================
 # PAGE 1: APOYOS
 # =========================
-elif page == "Seguimiento de Apoyos":
+elif page == "SOLICITUDES DE APOYO":
 
     st.title("🤝 Seguimiento de Apoyos")
     st.caption("Registro y seguimiento de a quiénes se les dio apoyo, estatus, responsable y fechas clave.")
@@ -756,7 +756,7 @@ elif page == "Seguimiento de Apoyos":
 # =========================
 # PAGE: LICITACIONES EN CURSO (Dashboard)
 # =========================
-elif page == "Licitaciones en curso":
+elif page == "LICITACIONES EN CURSO":
     st.title("📄 Licitaciones en curso")
     st.caption("Aquí solo se muestra lo guardado en la base (SQLite). Para cargar masivo: Excel (Base oficial) → ✅ Importar / Actualizar en la base.")
 
@@ -1126,7 +1126,7 @@ elif page == "Licitaciones en curso":
 
 # PAGE 3: RESUMEN (CONTROL OPERATIVO)
 # =========================
-elif page == "Resumen":
+elif page == "RESUMEN":
     st.title("🚦 Resumen (control operativo)")
     st.caption("Semáforo + ranking de urgencia y timeline (mini-Gantt) por licitación. Power BI se mantiene como dashboard exclusivo.")
 
@@ -1255,7 +1255,7 @@ elif page == "Resumen":
 # =========================
 # PAGE 4: TABLERO (KANBAN TIPO JIRA)
 # =========================
-elif page == "Tablero":
+elif page == "TABLERO":
     st.title("🧩 Tablero (tipo Jira)")
     st.caption("Vista Kanban por estatus. Cambia el estatus desde cada tarjeta.")
 
@@ -1342,7 +1342,7 @@ elif page == "Tablero":
 # =========================
 # PAGE 3: POWER BI
 # =========================
-elif page == "Power BI":
+elif page == "DASHBOARD":
     st.title("📊 Power BI")
     st.caption("Pega tu URL de 'embed' (Public o Share/Embed). La app la guarda y la muestra aquí.")
 
@@ -1370,7 +1370,7 @@ elif page == "Power BI":
 # =========================
 # PAGE 4: CALENDARIO
 # =========================
-elif page == "Calendario":
+elif page == "CALENDARIO":
     st.title("🗓️ Calendario de licitaciones")
     st.caption("Se arma desde las fechas de: Publicación, Junta de Aclaraciones, Apertura, Fallo, Firma de Contrato.")
 
