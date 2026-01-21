@@ -243,6 +243,7 @@ def pos_pct(dias, ventana):
 
 def timeline_html(dias_ja, dias_ap, dias_fa, ventana=60):
     """Barra horizontal con marcadores JA/AP/FA."""
+
     marks = [
         ("JA", dias_ja, "#2E86DE"),
         ("AP", dias_ap, "#F39C12"),
@@ -253,27 +254,75 @@ def timeline_html(dias_ja, dias_ap, dias_fa, ventana=60):
     for label, d, color in marks:
         if d is None:
             continue
+
         p = pos_pct(d, ventana)
+
         dots.append(f"""
-        <div style="position:absolute; left:calc({p}% - 7px); top:-6px;
-            width:14px; height:14px; border-radius:50%;
-            background:{color}; border:2px solid white;
-            box-shadow:0 1px 3px rgba(0,0,0,.25);" title="{label}: {d} días"></div>
-        <div style="position:absolute; left:calc({p}% - 12px); top:14px;
-            font-size:11px; color:#111; font-weight:600;">{label}</div>
+        <div style='
+            position:absolute;
+            left:calc({p}% - 7px);
+            top:-6px;
+            width:14px;
+            height:14px;
+            border-radius:50%;
+            background:{color};
+            border:2px solid white;
+            box-shadow:0 1px 3px rgba(0,0,0,.25);
+        ' title='{label}: {d} días'></div>
+
+        <div style='
+            position:absolute;
+            left:calc({p}% - 12px);
+            top:14px;
+            font-size:11px;
+            color:#111;
+            font-weight:600;
+        '>{label}</div>
         """)
 
     base = f"""
-    <div style="position:relative; width:100%; height:34px; margin-top:6px;">
-      <div style="position:absolute; left:0; top:6px; right:0; height:8px;
-        background:#E9EEF5; border-radius:999px;"></div>
-      <div style="position:absolute; left:0; top:3px; width:2px; height:14px;
-        background:#111; opacity:.55;"></div>
-      <div style="position:absolute; left:0; top:-14px; font-size:11px; color:#111; opacity:.7;">Hoy</div>
-      {''.join(dots)}
+    <div style='position:relative; width:100%; height:34px; margin-top:6px;'>
+        <div style='
+            position:absolute;
+            left:0;
+            top:6px;
+            right:0;
+            height:8px;
+            background:#E9EEF5;
+            border-radius:999px;
+        '></div>
+
+        <div style='
+            position:absolute;
+            left:0;
+            top:3px;
+            width:2px;
+            height:14px;
+            background:#111;
+            opacity:.55;
+        '></div>
+
+        <div style='
+            position:absolute;
+            left:0;
+            top:-14px;
+            font-size:11px;
+            color:#111;
+            opacity:.7;
+        '>Hoy</div>
+
+        {''.join(dots)}
     </div>
     """
+
     return base
+
+
+
+
+
+
+
 
 
 # =========================
