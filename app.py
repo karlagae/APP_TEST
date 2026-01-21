@@ -228,13 +228,13 @@ st.sidebar.title("📌 Menú")
 page = st.sidebar.radio(
     "Ir a:",
     [
-        "Excel (Base oficial)",
-        "Licitaciones en curso",
-        "Seguimiento de Apoyos",
-        "Resumen",
-        "Tablero",
-        "Power BI",
-        "Calendario",
+        "BASE DE DATOS",
+        "LICITACIONES EN CURSO",
+        "SOLICITUDES DE APOYO",
+        "RESUMEN",
+        "TABLERO",
+        "DASHBOARD",
+        "CALENDARIO",
     ]
 )
 
