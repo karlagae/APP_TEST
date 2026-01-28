@@ -567,7 +567,7 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
 
 
     def _txt(v) -> str:
-    return str(v or "").strip()
+        return str(v or "").strip()
 
     def _flag_apoyo(v) -> int:
         s = _txt(v).upper()
