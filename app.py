@@ -592,7 +592,7 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
     col_estatus = _pick_col(df.columns, "ESTATUS DE LA LICITACION", "ESTATUS")
     col_responsable = _pick_col(df.columns, "ELABORO", "RESPONSABLE")
 
-    col_solicita_apoyo = _pick_col(df.columns, "SOLICITA APOYO", "SOLICITUD APOYO", "SOLICITO APOYO", "APOYO", "SOLICITA_APOYO")
+    col_solicita_apoyo = _pick_col(df.columns, "SOLICITA APOYO", "SOLICITUD APOYO", "SOLICITO APOYO", "APOYO", "SOLICITA_APOYO", "SOLICITUD DE APOYO")
     col_cartas = _pick_col(df.columns, "CARTAS", "CARTA", "CARTA APOYO", "CARTA ENVIADA", "CARTAS ")
 
 
