@@ -1272,6 +1272,7 @@ elif page == "LICITACIONES EN CURSO":
     prebases_df  = f_show[f_show["tipo_norm"].isin(["PREBASES"])].copy()
     estudio_df   = f_show[f_show["tipo_norm"].isin(["ESTUDIO DE MERCADO"])].copy()
     inv3_df      = f_show[f_show["tipo_norm"].isin(["INVITACION A TRES PERSONAS", "INVITACIÓN A TRES PERSONAS"])].copy()
+    adj_dir      = f_show[f_show["tipo_norm"].isin(["ADJUDICACIÓN DIRECTA", "ADJUDICACIÓN DIRECTA"])].copy()
 
     # fallback: si tipo viene vacío, usamos clave
     if (bases_df.empty and sc_df.empty and prebases_df.empty and estudio_df.empty and inv3_df.empty) and "clave" in f_show.columns:
@@ -1291,31 +1292,34 @@ elif page == "LICITACIONES EN CURSO":
     if bases_df.empty and not f_show.empty:
         bases_df = f_show.copy()
 
-    section_header("📁 Bases", "Licitaciones tipo base (según clave).", theme="blue", chip=str(len(bases_df)))
+    section_header("📁 LICITACIONES", , theme="blue", chip=str(len(bases_df)))
     _render_table(bases_df)
 
     st.markdown("")
-    section_header("🧾 Solicitudes de cotización", "Solicitudes tipo SC (según clave).", theme="orange", chip=str(len(sc_df)))
+    section_header("🧾 SOLICITUDES DE COTIZACIÓN", theme="orange", chip=str(len(sc_df)))
     _render_table(sc_df)
 
 
 
     st.markdown("---")
-    section_header("📝 Prebases", "Documentos previos a la licitación.", theme="gray", chip=str(len(prebases_df)))
+    section_header("📝 PREBASES", "Documentos previos a la licitación.", theme="gray", chip=str(len(prebases_df)))
     _render_table(prebases_df)
 
     st.markdown("")
 
-    section_header("📊 Estudio de mercado", "Investigación/sondeo previo.", theme="gray", chip=str(len(estudio_df)))
+    section_header("📊 ESTUDIOS DE MERCADO", "IINVESTIGACIÓN DE MERCADO.", theme="gray", chip=str(len(estudio_df)))
     _render_table(estudio_df)
 
     st.markdown("")
 
-    section_header("👥 Invitación a tres personas", "Procedimiento por invitación.", theme="gray", chip=str(len(inv3_df)))
+    section_header("👥 INVITACIÓN A CUANDO MENOS TRES PERSONAS", theme="gray", chip=str(len(inv3_df)))
+    _render_table(inv3_df)
+
+    section_header("👥 ADJUDICACIONES DIRECTAS", theme="gray", chip=str(len(adj_dir)))
     _render_table(inv3_df)
 
     
-    section_header("📋 Lista completa (filtrada)", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
+    section_header("📋 LISTADO COMPLETO", "Incluye lo que estás viendo con filtros.", theme="gray", chip=str(len(f_show)))
     _render_table(f_show)
 
 # PAGE 3: RESUMEN (CONTROL OPERATIVO)
