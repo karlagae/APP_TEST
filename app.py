@@ -524,6 +524,44 @@ def _to_date_str(x) -> str:
         return dt.date().isoformat()
     except Exception:
         return ""
+def _txt(v) -> str:
+    return str(v or "").strip()
+
+
+def _flag_apoyo(v) -> int:
+    s = _txt(v).upper()
+    if not s:
+        return 0
+
+    # Si en excel pones LISTO, SI, X, etc.
+    if s in {"SI", "SÍ", "X", "1", "TRUE", "LISTO", "OK"}:
+        return 1
+
+    # si viene texto tipo "SOLICITADO" / "APOYO"
+    if "APOYO" in s or "SOLICIT" in s:
+        return 1
+
+    return 0
+
+
+def _flag_carta(v) -> int:
+    s = _txt(v).upper()
+    if not s:
+        return 0
+
+    # En tu excel aparece "CARTA APOYO" => cuenta como enviada
+    if "CARTA" in s or "ENVIAD" in s or "LISTO" in s or "APOYO" in s:
+        return 1
+
+    return 0
+
+
+
+
+
+
+
+
 
 
 def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
@@ -566,29 +604,6 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
     updated = 0
 
 
-    def _txt(v) -> str:
-        return str(v or "").strip()
-
-    def _flag_apoyo(v) -> int:
-        s = _txt(v).upper()
-        if not s:
-        return 0
-        # Si en excel pones LISTO, SI, X, etc.
-        if s in {"SI", "SÍ", "X", "1", "TRUE", "LISTO", "OK"}:
-        return 1
-    # si viene texto tipo "SOLICITADO" / "APOYO"
-        if "APOYO" in s or "SOLICIT" in s:
-            return 1
-        return 0
-
-    def _flag_carta(v) -> int:
-        s = _txt(v).upper()
-        if not s:
-            return 0
-    # En tu excel aparece "CARTA APOYO" => cuenta como enviada
-        if "CARTA" in s or "ENVIAD" in s or "LISTO" in s or "APOYO" in s:
-            return 1
-        return 0
 
 
     
