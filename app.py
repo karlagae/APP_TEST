@@ -1292,7 +1292,7 @@ elif page == "LICITACIONES EN CURSO":
     if bases_df.empty and not f_show.empty:
         bases_df = f_show.copy()
 
-    section_header("📁 LICITACIONES", , theme="blue", chip=str(len(bases_df)))
+    section_header("📁 LICITACIONES",  theme="blue", chip=str(len(bases_df)))
     _render_table(bases_df)
 
     st.markdown("")
