@@ -860,6 +860,12 @@ elif page == "SOLICITUDES DE APOYO":
                                 fecha_compromiso=:fecha_compromiso,
                                 fecha_cierre=:fecha_cierre,
                                 notas=:notas
+                                solicita_apoyo_txt = :solicita_apoyo_txt,
+                                pidio_apoyo       = :pidio_apoyo,
+                                cartas            = :cartas,
+                                carta_enviada     = :carta_enviada,
+
+
                             WHERE id=:id;
                         """), payload)
                         st.success("Apoyo actualizado.")
