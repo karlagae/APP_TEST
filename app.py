@@ -554,6 +554,10 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
     col_estatus = _pick_col(df.columns, "ESTATUS DE LA LICITACION", "ESTATUS")
     col_responsable = _pick_col(df.columns, "ELABORO", "RESPONSABLE")
 
+    col_solicita_apoyo = _pick_col(df.columns, "SOLICITA APOYO", "SOLICITUD APOYO", "SOLICITO APOYO", "APOYO", "SOLICITA_APOYO")
+    col_cartas = _pick_col(df.columns, "CARTAS", "CARTA", "CARTA APOYO", "CARTA ENVIADA", "CARTAS ")
+
+
     if not col_clave:
         # Without clave we can't upsert safely
         return 0, 0
@@ -561,6 +565,39 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
     inserted = 0
     updated = 0
 
+
+    def _txt(v) -> str:
+    return str(v or "").strip()
+
+    def _flag_apoyo(v) -> int:
+        s = _txt(v).upper()
+        if not s:
+        return 0
+        # Si en excel pones LISTO, SI, X, etc.
+        if s in {"SI", "SÍ", "X", "1", "TRUE", "LISTO", "OK"}:
+        return 1
+    # si viene texto tipo "SOLICITADO" / "APOYO"
+        if "APOYO" in s or "SOLICIT" in s:
+            return 1
+        return 0
+
+    def _flag_carta(v) -> int:
+        s = _txt(v).upper()
+        if not s:
+            return 0
+    # En tu excel aparece "CARTA APOYO" => cuenta como enviada
+        if "CARTA" in s or "ENVIAD" in s or "LISTO" in s or "APOYO" in s:
+            return 1
+        return 0
+
+
+    
+
+
+
+
+
+    
     # Iterate rows
     for _, r in df.iterrows():
         clave = str(r.get(col_clave, "") or "").strip()
@@ -582,9 +619,15 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
             "apertura": _to_date_str(r.get(col_apertura)) if col_apertura else "",
             "fallo": _to_date_str(r.get(col_fallo)) if col_fallo else "",
             "firma_contrato": _to_date_str(r.get(col_firma)) if col_firma else "",
-            "pidio_apoyo": 0,
+            "solicita_apoyo_txt": _txt(r.get(col_solicita_apoyo)) if col_solicita_apoyo else "",
+            "cartas": _txt(r.get(col_cartas)) if col_cartas else "",
+
+            "pidio_apoyo": _flag_apoyo(r.get(col_solicita_apoyo)) if col_solicita_apoyo else 0,
+            "carta_enviada": _flag_carta(r.get(col_cartas)) if col_cartas else 0,
+
+            #"pidio_apoyo": 0,
             "apoyo_id": None,
-            "carta_enviada": 0,
+           # "carta_enviada": 0,
             "razon_social": str(r.get(col_razon, "") or "").strip() if col_razon else "",
             "estatus": str(r.get(col_estatus, "") or "").strip() if col_estatus else "",
             "responsable": str(r.get(col_responsable, "") or "").strip() if col_responsable else "",
@@ -614,6 +657,12 @@ def upsert_licitaciones_from_excel(df_excel: pd.DataFrame):
                         firma_contrato=:firma_contrato,
                         razon_social=:razon_social,
                         estatus=:estatus,
+
+                        solicita_apoyo_txt=:solicita_apoyo_txt,
+                        cartas=:cartas,
+                        pidio_apoyo=:pidio_apoyo,
+                        carta_enviada=:carta_enviada,
+
                         responsable=:responsable
                     WHERE id=:id;
                 """), payload)
