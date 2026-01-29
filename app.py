@@ -972,7 +972,7 @@ elif page == "LICITACIONES EN CURSO":
         st.markdown('<div class="filters-row">', unsafe_allow_html=True)
 
         with fcol1:
-            q = st.text_input("🔎 Buscar…", value="", placeholder="CLAVE / TIPO / INSTITUCIÓN / UNIDAD / ESTADO")
+            q = st.text_input("🔎 BUSCAR…", value="", placeholder="CLAVE / TIPO / INSTITUCIÓN / UNIDAD / ESTADO")
 
         with fcol2:
             inst_opts = ["(Todas)"] + sorted([x for x in df["institucion"].fillna("").unique().tolist() if str(x).strip() != ""])
