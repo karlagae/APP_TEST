@@ -1273,6 +1273,86 @@ elif page == "LICITACIONES EN CURSO":
     else:
         f_show["tipo_norm"] = ""
 
+
+    
+    st.markdown("")
+
+    section_header("📊 Conteo por tipo de procedimiento", "Cuántos registros hay por cada tipo (según filtros).", theme="gray")
+
+    # Mapeo a nombres bonitos
+    tipo_map = {
+        "LICITACION": "Licitaciones",
+        "LICITACIÓN": "Licitaciones",
+        "BASES": "Bases",
+        "SOLICITUD DE COTIZACION": "Solicitudes de cotización",
+        "SOLICITUD DE COTIZACIÓN": "Solicitudes de cotización",
+        "PREBASES": "Prebases",
+        "ESTUDIO DE MERCADO": "Estudio de mercado",
+        "INVITACION A TRES PERSONAS": "Invitación a tres personas",
+        "INVITACIÓN A TRES PERSONAS": "Invitación a tres personas",
+        "ADJUDICACION DIRECTA": "Adjudicaciones directas",
+        "ADJUDICACIÓN DIRECTA": "Adjudicaciones directas",
+        "DIRECTA": "Adjudicaciones directas",
+        "AD": "Adjudicaciones directas",
+    }
+
+    tmp = f_show.copy()
+    tmp["tipo_label"] = tmp["tipo_norm"].map(tipo_map).fillna("Otros / sin tipo")
+
+    conteo = (
+        tmp["tipo_label"]
+        .value_counts()
+        .reset_index()
+        .rename(columns={"index": "Tipo", "tipo_label": "Conteo"})
+    )
+
+# Orden deseado (para que salga bonito)
+    orden = [
+        "Licitaciones",
+        "Bases",
+        "Solicitudes de cotización",
+        "Adjudicaciones directas",
+        "Prebases",
+        "Estudio de mercado",
+        "Invitación a tres personas",
+        "Otros / sin tipo",
+    ]
+    conteo["Tipo"] = pd.Categorical(conteo["Tipo"], categories=orden, ordered=True)
+    conteo = conteo.sort_values("Tipo")
+
+    st.bar_chart(conteo.set_index("Tipo")["Conteo"])
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    
+
     bases_df     = f_show[f_show["tipo_norm"].isin(["BASES", "LICITACION"])].copy()
     sc_df        = f_show[f_show["tipo_norm"].isin(["SOLICITUD DE COTIZACION", "SOLICITUD DE COTIZACIÓN"])].copy()
     prebases_df  = f_show[f_show["tipo_norm"].isin(["PREBASES"])].copy()
