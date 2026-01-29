@@ -777,7 +777,7 @@ elif page == "SOLICITUDES DE APOYO":
             return current.get(key, default) if current else default
 
         fecha_registro = st.date_input("Fecha de registro", value=date.fromisoformat(g("fecha_registro", date.today().isoformat())))
-        institucion = st.text_input("Institución", value=g("institucion"))
+        institucion = st.text_input("INSTITUCIÓN", value=g("institucion"))
         unidad = st.text_input("Unidad / Hospital", value=g("unidad"))
         contacto = st.text_input("Contacto", value=g("contacto"))
         email = st.text_input("Email", value=g("email"))
