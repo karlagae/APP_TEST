@@ -1299,12 +1299,9 @@ elif page == "LICITACIONES EN CURSO":
     tmp = f_show.copy()
     tmp["tipo_label"] = tmp["tipo_norm"].map(tipo_map).fillna("Otros / sin tipo")
 
-    conteo = (
-        tmp["tipo_label"]
-        .value_counts()
-        .reset_index()
-        .rename(columns={"index": "Tipo", "tipo_label": "Conteo"})
-    )
+    conteo = tmp["tipo_label"].value_counts(dropna=False).reset_index()
+    conteo.columns = ["Tipo", "Conteo"]
+
 
 # Orden deseado (para que salga bonito)
     orden = [
