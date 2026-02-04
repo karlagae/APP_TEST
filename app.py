@@ -1880,7 +1880,7 @@ elif page == "BUSCADOR DE CATALOGOS":
                 st.dataframe(df_res.sort_values("Coincidencias", ascending=False), use_container_width=True)
                 st.subheader("📄 Páginas donde aparece la palabra")
 
-                                for c in st.session_state.catalogs:
+                    for c in st.session_state.catalogs:
                     pages = find_word_pages(c["page_texts"], query)
                     if not pages:
                         continue
