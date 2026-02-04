@@ -1860,53 +1860,26 @@ elif page == "BUSCADOR DE CATALOGOS":
             st.warning("Primero carga y guarda catálogos.")
         else:
             results = []
-            for c in st.session_state.catalogs:
-                pages = find_word_pages(c["page_texts"], query)
-                results.append({
-                    "Catálogo": c["name"],
-                    "Archivo": c["filename"],
-                    "Coincidencias": len(pages),
-                    "Páginas": ", ".join(map(str, pages)) if pages else ""
-                })
-
-            df_res = pd.DataFrame(results)
-            if only_hits:
-                df_res = df_res[df_res["Coincidencias"] > 0]
-
-            if df_res.empty:
-                st.error("No encontré esa palabra en los catálogos cargados.")
-            else:
-                st.success("Coincidencias encontradas ✅")
-                st.dataframe(df_res.sort_values("Coincidencias", ascending=False), use_container_width=True)
-                st.subheader("📄 Páginas donde aparece la palabra")
-
-                    for c in st.session_state.catalogs:
+                 for c in st.session_state.catalogs:
                     pages = find_word_pages(c["page_texts"], query)
                     if not pages:
                         continue
 
-                    label = f"📘 {c['name']} — páginas {', '.join(map(str, pages))}"
-                    with st.expander(label, expanded=False):
-
+                    with st.expander(
+                        f"📘 {c['name']} — páginas {', '.join(map(str, pages))}",
+                        expanded=False
+                    ):
                         max_pages_to_show = 5
 
                         for p in pages[:max_pages_to_show]:
                             st.markdown(f"**Página {p}**")
 
-                            png = None
-                            try:
-                                png = render_pdf_page_as_png(
-                                    c["pdf_bytes"],
-                                    page_number_1based=p,
-                                    zoom=2.0
-                                )
-                            except Exception:
-                                png = None
-
-                            if png:
-                                st.image(png, use_container_width=True)
-                            else:
-                                st.warning(f"No se pudo mostrar la página {p}")
+                            png = render_pdf_page_as_png(
+                                c["pdf_bytes"],
+                                page_number_1based=p,
+                                zoom=2.0
+                            )
+                            st.image(png, use_container_width=True)
 
                         if len(pages) > max_pages_to_show:
                             st.info(
@@ -1915,8 +1888,11 @@ elif page == "BUSCADOR DE CATALOGOS":
                             )
 
 
-              
 
+
+
+            
+           
                        if len(pages) > max_pages_to_show:
                             st.info(f"Se muestran solo {max_pages_to_show} páginas de {len(pages)} coincidencias.")
 
