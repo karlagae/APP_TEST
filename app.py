@@ -3,6 +3,11 @@ import pandas as pd
 from datetime import datetime, date
 from sqlalchemy import create_engine, text
 from io import BytesIO
+import re
+import fitz  # PyMuPDF
+from pdf2image import convert_from_bytes
+import pytesseract
+
 
 # =========================
 # CONFIG
@@ -175,6 +180,64 @@ def badge(estatus: str):
 
 
 
+
+
+
+#####
+
+def _normalize(s: str) -> str:
+    if s is None:
+        return ""
+    s = str(s).replace("\n", " ")
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def extract_pages_text(pdf_bytes: bytes, use_ocr_if_needed: bool = True) -> list[str]:
+    """
+    Devuelve lista de texto por página (index 0 = pág 1).
+    - Intenta extraer texto con PyMuPDF.
+    - Si no hay texto real, aplica OCR (p/ PDFs escaneados).
+    """
+    texts = []
+
+    # 1) Texto nativo
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    native_texts = []
+    for page in doc:
+        native_texts.append(_normalize(page.get_text("text")))
+    doc.close()
+
+    # Si hay texto suficiente, úsalo
+    if any(len(t) > 30 for t in native_texts):
+        return native_texts
+
+    # 2) OCR fallback
+    if not use_ocr_if_needed:
+        return native_texts
+
+    images = convert_from_bytes(pdf_bytes, dpi=250)
+    for img in images:
+        try:
+            ocr_text = pytesseract.image_to_string(img, lang="spa")
+        except Exception:
+            ocr_text = pytesseract.image_to_string(img)
+        texts.append(_normalize(ocr_text))
+
+    return texts
+
+
+def find_word_pages(page_texts: list[str], query: str) -> list[int]:
+    q = _normalize(query).lower()
+    if not q:
+        return []
+
+    hits = []
+    for i, t in enumerate(page_texts):
+        if q in (t or "").lower():
+            hits.append(i + 1)
+    return hits
+
 # =========================
 # HELPERS DE UI (DASHBOARD)
 # =========================
@@ -346,6 +409,7 @@ page = st.sidebar.radio(
         "TABLERO",
         "DASHBOARD",
         "CALENDARIO",
+        "BUSCADOR DE CATALOGOS",
     ]
 )
 
@@ -1734,4 +1798,101 @@ elif page == "CALENDARIO":
         )
     else:
         st.info("No hay eventos para exportar.")
+
+
+
+  ####
+
+   elif page == "BUSCADOR DE CATALOGOS":
+    st.title("🔎 Buscador de Catálogos (PDF)")
+    st.write("Sube uno o varios catálogos y busca una palabra para ver en qué página aparece.")
+
+    if "catalogs" not in st.session_state:
+        st.session_state.catalogs = []  # [{"name","filename","page_texts"}]
+
+    with st.expander("📥 Cargar catálogos", expanded=True):
+        uploaded = st.file_uploader(
+            "Sube uno o varios PDF",
+            type=["pdf"],
+            accept_multiple_files=True
+        )
+
+        if uploaded:
+            st.info("Pon un nombre claro para cada catálogo (ej. 'GEMM 5000').")
+            names = {}
+
+            for f in uploaded:
+                names[f.name] = st.text_input(
+                    f"Nombre para {f.name}",
+                    value=f.name.replace(".pdf", ""),
+                    key=f"nm_{f.name}"
+                )
+
+            if st.button("✅ Guardar e indexar"):
+                st.session_state.catalogs = []
+                with st.spinner("Indexando PDFs (si hay OCR puede tardar)..."):
+                    for f in uploaded:
+                        pdf_bytes = f.read()
+                        page_texts = extract_pages_text(pdf_bytes, use_ocr_if_needed=True)
+
+                        st.session_state.catalogs.append({
+                            "name": names.get(f.name, f.name.replace(".pdf", "")),
+                            "filename": f.name,
+                            "page_texts": page_texts
+                        })
+                st.success(f"Listo ✅ {len(st.session_state.catalogs)} catálogos indexados.")
+
+    st.divider()
+
+    st.subheader("🔎 Buscar palabra")
+    query = st.text_input("Palabra o frase", placeholder="Ej: ANALIZADOR, CARTUCHO, REACTIVO...")
+    only_hits = st.checkbox("Mostrar solo catálogos con coincidencias", value=True)
+
+    if st.button("Buscar"):
+        if not st.session_state.catalogs:
+            st.warning("Primero carga y guarda catálogos.")
+        else:
+            results = []
+            for c in st.session_state.catalogs:
+                pages = find_word_pages(c["page_texts"], query)
+                results.append({
+                    "Catálogo": c["name"],
+                    "Archivo": c["filename"],
+                    "Coincidencias": len(pages),
+                    "Páginas": ", ".join(map(str, pages)) if pages else ""
+                })
+
+            df_res = pd.DataFrame(results)
+            if only_hits:
+                df_res = df_res[df_res["Coincidencias"] > 0]
+
+            if df_res.empty:
+                st.error("No encontré esa palabra en los catálogos cargados.")
+            else:
+                st.success("Coincidencias encontradas ✅")
+                st.dataframe(df_res.sort_values("Coincidencias", ascending=False), use_container_width=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
