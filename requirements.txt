@@ -9,3 +9,7 @@ pandas
 pdf2image
 pytesseract
 Pillow
+pymupdf
+pdf2image
+pytesseract
+Pillow
