@@ -1856,37 +1856,38 @@ elif page == "BUSCADOR DE CATALOGOS":
     only_hits = st.checkbox("Mostrar solo catálogos con coincidencias", value=True)
 
     if st.button("Buscar"):
-    if not st.session_state.catalogs:
-        st.warning("Primero carga y guarda catálogos.")
-    else:
-        results = []
+       if not st.session_state.catalogs:
+           st.warning("Primero carga y guarda catálogos.")
+       else:
+           results = []
 
-        for c in st.session_state.catalogs:
-            pages = find_word_pages(c["page_texts"], query)
-            if not pages:
-                continue
+           for c in st.session_state.catalogs:
+               pages = find_word_pages(c["page_texts"], query)
+               if not pages:
+                   continue
 
-            with st.expander(
-                f"📘 {c['name']} — páginas {', '.join(map(str, pages))}",
-                expanded=False
-            ):
-                max_pages_to_show = 5
+               with st.expander(
+                   f"📘 {c['name']} — páginas {', '.join(map(str, pages))}",
+                   expanded=False
+               ):
+                   max_pages_to_show = 5
 
-                for p in pages[:max_pages_to_show]:
-                    st.markdown(f"**Página {p}**")
+                   for p in pages[:max_pages_to_show]:
+                       st.markdown(f"**Página {p}**")
 
-                    png = render_pdf_page_as_png(
-                        c["pdf_bytes"],
-                        page_number_1based=p,
-                        zoom=2.0
-                    )
-                    st.image(png, use_container_width=True)
+                       png = render_pdf_page_as_png(
+                           c["pdf_bytes"],
+                           page_number_1based=p,
+                           zoom=2.0
+                       )
+                       st.image(png, use_container_width=True)
 
-                if len(pages) > max_pages_to_show:
-                    st.info(
-                        f"Se muestran solo {max_pages_to_show} páginas "
-                        f"de {len(pages)} coincidencias."
-                    )
+                   if len(pages) > max_pages_to_show:
+                        st.info(
+                           f"Se muestran solo {max_pages_to_show} páginas "
+                           f"de {len(pages)} coincidencias."
+                       )
+
 
            
                        if len(pages) > max_pages_to_show:
