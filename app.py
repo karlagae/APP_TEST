@@ -1883,16 +1883,22 @@ elif page == "BUSCADOR DE CATALOGOS":
                        st.image(png, use_container_width=True)
 
                    if len(pages) > max_pages_to_show:
-                        st.info(
+                       st.info(
                            f"Se muestran solo {max_pages_to_show} páginas "
                            f"de {len(pages)} coincidencias."
                        )
 
 
-           
-                       if len(pages) > max_pages_to_show:
-                            st.info(f"Se muestran solo {max_pages_to_show} páginas de {len(pages)} coincidencias.")
 
+
+
+
+
+      
+
+
+           
+                     
 
 
 
