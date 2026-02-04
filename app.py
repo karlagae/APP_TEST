@@ -1880,32 +1880,42 @@ elif page == "BUSCADOR DE CATALOGOS":
                 st.dataframe(df_res.sort_values("Coincidencias", ascending=False), use_container_width=True)
                 st.subheader("📄 Páginas donde aparece la palabra")
 
-                for c in st.session_state.catalogs:
+                                for c in st.session_state.catalogs:
                     pages = find_word_pages(c["page_texts"], query)
                     if not pages:
                         continue
 
-                    with st.expander(
-                        f"📘 {c['name']} — páginas {', '.join(map(str, pages))}",
-                        expanded=False
-                    ):
+                    label = f"📘 {c['name']} — páginas {', '.join(map(str, pages))}"
+                    with st.expander(label, expanded=False):
+
                         max_pages_to_show = 5
 
                         for p in pages[:max_pages_to_show]:
-                             st.markdown(f"**Página {p}**")
+                            st.markdown(f"**Página {p}**")
 
-                             try:
-                                 png = render_pdf_page_as_png(
-                                     c["pdf_bytes"],
-                                     page_number_1based=p,
-                                     zoom=2.0
-                                 )
-                                 st.image(png, use_container_width=True)
-                             except Exception as e:
-                                 st.warning(f"No se pudo mostrar la página {p}: {e}")
+                            png = None
+                            try:
+                                png = render_pdf_page_as_png(
+                                    c["pdf_bytes"],
+                                    page_number_1based=p,
+                                    zoom=2.0
+                                )
+                            except Exception:
+                                png = None
+
+                            if png:
+                                st.image(png, use_container_width=True)
+                            else:
+                                st.warning(f"No se pudo mostrar la página {p}")
+
+                        if len(pages) > max_pages_to_show:
+                            st.info(
+                                f"Se muestran solo {max_pages_to_show} páginas "
+                                f"de {len(pages)} coincidencias."
+                            )
 
 
-                                 
+              
 
                        if len(pages) > max_pages_to_show:
                             st.info(f"Se muestran solo {max_pages_to_show} páginas de {len(pages)} coincidencias.")
