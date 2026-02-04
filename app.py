@@ -1747,6 +1747,11 @@ elif page == "CALENDARIO":
             add_event(r, "fallo", "🏁 FALLO")
             add_event(r, "firma_contrato", "✍️ FIRMA DE CONTRATO")
 
+
+
+
+
+    
     # Intentar calendario visual
     try:
         from streamlit_calendar import calendar
@@ -1801,14 +1806,12 @@ elif page == "CALENDARIO":
 
 
 
-  ####
-
-   elif page == "BUSCADOR DE CATALOGOS":
+elif page == "BUSCADOR DE CATALOGOS":
     st.title("🔎 Buscador de Catálogos (PDF)")
     st.write("Sube uno o varios catálogos y busca una palabra para ver en qué página aparece.")
 
     if "catalogs" not in st.session_state:
-        st.session_state.catalogs = []  # [{"name","filename","page_texts"}]
+        st.session_state.catalogs = []
 
     with st.expander("📥 Cargar catálogos", expanded=True):
         uploaded = st.file_uploader(
@@ -1830,7 +1833,7 @@ elif page == "CALENDARIO":
 
             if st.button("✅ Guardar e indexar"):
                 st.session_state.catalogs = []
-                with st.spinner("Indexando PDFs (si hay OCR puede tardar)..."):
+                with st.spinner("Indexando PDFs..."):
                     for f in uploaded:
                         pdf_bytes = f.read()
                         page_texts = extract_pages_text(pdf_bytes, use_ocr_if_needed=True)
@@ -1871,28 +1874,3 @@ elif page == "CALENDARIO":
             else:
                 st.success("Coincidencias encontradas ✅")
                 st.dataframe(df_res.sort_values("Coincidencias", ascending=False), use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
