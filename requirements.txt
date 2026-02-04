@@ -3,3 +3,9 @@ pandas
 sqlalchemy
 openpyxl
 streamlit-calendar
+streamlit
+pymupdf
+pandas
+pdf2image
+pytesseract
+Pillow
