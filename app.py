@@ -1895,14 +1895,17 @@ elif page == "BUSCADOR DE CATALOGOS":
                              st.markdown(f"**Página {p}**")
 
                              try:
-                                png = render_pdf_page_as_png(
-                                    c["pdf_bytes"],
-                                    page_number_1based=p,
-                                    zoom=2.0
-                                )
-                                st.image(png, use_container_width=True)
-                            except Exception as e:
-                                st.warning(f"No se pudo mostrar la página {p}: {e}")
+                                 png = render_pdf_page_as_png(
+                                     c["pdf_bytes"],
+                                     page_number_1based=p,
+                                     zoom=2.0
+                                 )
+                                 st.image(png, use_container_width=True)
+                             except Exception as e:
+                                 st.warning(f"No se pudo mostrar la página {p}: {e}")
+
+
+                                 
 
                        if len(pages) > max_pages_to_show:
                             st.info(f"Se muestran solo {max_pages_to_show} páginas de {len(pages)} coincidencias.")
